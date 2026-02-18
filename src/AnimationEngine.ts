@@ -83,7 +83,7 @@ export class AnimationEngine {
       }
     });
 
-    // Tilt animation - slow head circle oscillation (pensive mood)
+    // Tilt animation - slow head side-to-side movement (pensive mood)
     this.presets.set('tilt', {
       name: 'tilt',
       targetIds: ['head'],

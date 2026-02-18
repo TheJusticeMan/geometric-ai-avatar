@@ -186,7 +186,8 @@ class GeometricAvatarApp {
 
   private resetToIdleAnimations(): void {
     this.animationEngine.stopAll();
-    // onLoad trigger starts the idle animations (float and breathe)
+    // onLoad trigger starts the default idle animations (float and breathe)
+    // Note: blink animations are loaded separately from idle.json
     this.animationEngine.triggerAnimation('onLoad');
   }
 
