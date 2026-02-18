@@ -6,6 +6,17 @@ import { Mirror } from './Mirror';
 import { SchemaValidator } from './SchemaValidator';
 import type { CharacterSchema, MoodState } from './types';
 
+// Animation timing constants
+const BLINK_TO_PROCESSING_DELAY = 300;
+const MEDIUM_MESSAGE_PROCESSING_DURATION = 2000;
+const BASE_PROCESSING_DURATION = 2000;
+const MAX_PROCESSING_DURATION = 5000;
+const DURATION_PER_CHAR = 10;
+
+// Message length thresholds
+const SHORT_MESSAGE_THRESHOLD = 20;
+const MEDIUM_MESSAGE_THRESHOLD = 100;
+
 class GeometricAvatarApp {
   private parser: AvatarParser | null = null;
   private animationEngine: AnimationEngine;
@@ -142,28 +153,31 @@ class GeometricAvatarApp {
     this.animationEngine.triggerAnimation('onMessageReceived');
 
     // Graduated animation responses based on message length
-    if (messageLength < 20) {
+    if (messageLength < SHORT_MESSAGE_THRESHOLD) {
       // Short messages: Quick blink acknowledgment (already triggered above)
       // No additional animation needed
-    } else if (messageLength >= 20 && messageLength <= 100) {
+    } else if (messageLength >= SHORT_MESSAGE_THRESHOLD && messageLength <= MEDIUM_MESSAGE_THRESHOLD) {
       // Medium messages: Blink + brief processing animation
       setTimeout(() => {
         this.animationEngine.triggerAnimation('isProcessing');
-      }, 300);
+      }, BLINK_TO_PROCESSING_DELAY);
       
       // Auto-resolve after brief duration
       setTimeout(() => {
         this.animationEngine.stopAll();
         this.animationEngine.triggerAnimation('onLoad');
-      }, 2000);
+      }, MEDIUM_MESSAGE_PROCESSING_DURATION);
     } else {
       // Long messages (> 100 chars): Blink + extended processing animation
       setTimeout(() => {
         this.animationEngine.triggerAnimation('isProcessing');
-      }, 300);
+      }, BLINK_TO_PROCESSING_DELAY);
       
       // Auto-resolve after duration proportional to message length
-      const processingDuration = Math.min(5000, 2000 + (messageLength - 100) * 10);
+      const processingDuration = Math.min(
+        MAX_PROCESSING_DURATION,
+        BASE_PROCESSING_DURATION + (messageLength - MEDIUM_MESSAGE_THRESHOLD) * DURATION_PER_CHAR
+      );
       setTimeout(() => {
         this.animationEngine.stopAll();
         this.animationEngine.triggerAnimation('onLoad');
