@@ -220,7 +220,7 @@ export class ExpressionEngine {
   
   // Interpolate between two expressions for smooth transitions
   blendExpressions(from: ExpressionConfig, to: ExpressionConfig, t: number): ExpressionConfig {
-    const lerp = (a: number, b: number) => a + (b - a) * t;
+    const lerp = (a: number, b: number): number => a + (b - a) * t;
     
     return {
       eyes: {

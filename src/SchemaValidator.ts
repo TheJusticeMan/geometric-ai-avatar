@@ -1,6 +1,5 @@
 import Ajv, { type ValidateFunction } from 'ajv';
-import type { CharacterSchema, AnimationSchema, AnimeCharacterSchema, AnyCharacterSchema } from './types';
-import { isAnimeCharacter } from './types';
+import type { CharacterSchema, AnimationSchema, AnimeCharacterSchema } from './types';
 
 // JSON Schema definitions for validation
 const characterSchemaDefinition = {

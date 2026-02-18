@@ -11,6 +11,9 @@ export class CharacterGallery {
     { id: 'scholar-avatar', name: 'Scholar', description: 'A focused academic with a hexagonal cap', path: '/data/characters/scholar.json' },
     { id: 'guardian-avatar', name: 'Guardian', description: 'A broad, powerful protector', path: '/data/characters/guardian.json' },
     { id: 'trickster-avatar', name: 'Trickster', description: 'An asymmetric, playful spirit', path: '/data/characters/trickster.json' },
+    { id: 'anime-default', name: 'Anime Default', description: 'Standard anime-style character', path: '/data/characters/anime-default.json' },
+    { id: 'anime-chibi', name: 'Chibi', description: 'Cute chibi-style with exaggerated features', path: '/data/characters/anime-chibi.json' },
+    { id: 'anime-warrior', name: 'Anime Warrior', description: 'Bold shounen-style fighter', path: '/data/characters/anime-warrior.json' },
   ];
 
   getPresets(): CharacterPreset[] {

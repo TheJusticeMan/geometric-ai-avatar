@@ -88,9 +88,7 @@ export class AnimeCharacterBuilder {
   // Build base layer (head and body shapes)
   private buildBaseLayer(): AnimeElement[] {
     const elements: AnimeElement[] = [];
-    const scale = this.style === 'chibi' ? 1.2 : 1;
     const headY = this.style === 'chibi' ? 80 : 100;
-    const bodyY = this.style === 'chibi' ? 180 : 200;
     
     // Head outline
     elements.push({
@@ -584,7 +582,7 @@ export class AnimeCharacterBuilder {
   }
   
   // Generate eye path
-  private generateEyePath(config: EyeConfig, x: number, y: number, isLeft: boolean): string {
+  private generateEyePath(config: EyeConfig, x: number, y: number, _isLeft: boolean): string {
     const width = 12;
     const height = 10 * config.openness;
     

@@ -8,8 +8,7 @@ import type {
   AnimeElement,
   PathElement,
   GradientDefinition,
-  FilterDefinition,
-  isAnimeCharacter
+  FilterDefinition
 } from './types';
 import { isAnimeCharacter as checkIsAnimeCharacter } from './types';
 
