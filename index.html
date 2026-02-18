@@ -454,6 +454,55 @@
       </div>
 
       <div class="section">
+        <h2>🤖 LLM Provider</h2>
+        <select id="provider-select" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); color: #e0e0e0; margin-bottom: 10px;">
+          <option value="">-- Manual (Copy/Paste) --</option>
+          <option value="openai">OpenAI (GPT-4o)</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+          <option value="google">Google (Gemini)</option>
+          <option value="ollama">Ollama (Local)</option>
+          <option value="generic">Custom OpenAI-Compatible</option>
+        </select>
+        
+        <div id="provider-config" style="display:none;">
+          <input id="api-key-input" type="password" placeholder="API Key" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); color: #e0e0e0; margin-bottom: 10px;" />
+          <input id="base-url-input" type="text" placeholder="Base URL (optional)" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); color: #e0e0e0; margin-bottom: 10px; display: none;" />
+          <select id="model-select" style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); color: #e0e0e0; margin-bottom: 10px;"></select>
+          <div class="button-group">
+            <button id="save-key-btn" class="btn">💾 Save Key</button>
+            <button id="test-key-btn" class="btn">🧪 Test Connection</button>
+          </div>
+          <div id="key-status" style="margin-top: 10px; padding: 10px; border-radius: 8px; display: none;"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>💬 Chat with LLM</h2>
+        <textarea id="llm-instruction" class="llm-textarea" placeholder="Describe how to modify the avatar..." style="min-height: 80px;"></textarea>
+        <div class="button-group">
+          <button id="send-llm-btn" class="btn btn-primary">🚀 Send to LLM</button>
+          <button id="send-llm-stream-btn" class="btn">🌊 Send (Streaming)</button>
+        </div>
+        <div id="llm-response-display" style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 15px; margin-top: 10px; min-height: 100px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.85em; line-height: 1.6; white-space: pre-wrap; display: none;"></div>
+      </div>
+
+      <div class="section">
+        <h2>👁️ Vision Mirror</h2>
+        <div class="button-group">
+          <button id="capture-btn" class="btn">📸 Capture Screenshot</button>
+          <button id="analyze-btn" class="btn">🔍 Analyze Avatar</button>
+        </div>
+        <div class="button-group">
+          <button id="refine-btn" class="btn btn-primary">🔄 Auto-Refine</button>
+        </div>
+        <div id="vision-feedback" style="background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 15px; margin-top: 10px; max-height: 300px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 0.85em; line-height: 1.6; white-space: pre-wrap; display: none;"></div>
+        <div id="refinement-progress" style="display:none; margin-top: 10px;">
+          <progress id="refine-progress" max="3" value="0" style="width: 100%; height: 20px;"></progress>
+          <div id="refine-status" style="margin-top: 5px; text-align: center;"></div>
+        </div>
+      </div>
+
+      <div class="section">
         <h2>Character Management</h2>
         <div class="button-group">
           <button id="export-btn" class="btn">💾 Export Character</button>
