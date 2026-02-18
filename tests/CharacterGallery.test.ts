@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { CharacterGallery } from '../src/CharacterGallery';
 
 describe('CharacterGallery', () => {
-  it('should return 4 presets', () => {
+  it('should return 7 presets (4 geometric + 3 anime)', () => {
     const gallery = new CharacterGallery();
     const presets = gallery.getPresets();
     
-    expect(presets).toHaveLength(4);
+    expect(presets).toHaveLength(7);
   });
 
   it('should have unique preset IDs', () => {
@@ -34,10 +34,15 @@ describe('CharacterGallery', () => {
     const presets = gallery.getPresets();
     
     const ids = presets.map(p => p.id);
+    // V1.0 geometric characters
     expect(ids).toContain('default-avatar');
     expect(ids).toContain('scholar-avatar');
     expect(ids).toContain('guardian-avatar');
     expect(ids).toContain('trickster-avatar');
+    // V2.0 anime characters
+    expect(ids).toContain('anime-default');
+    expect(ids).toContain('anime-chibi');
+    expect(ids).toContain('anime-warrior');
   });
 
   it('should return null for non-existent preset', async () => {

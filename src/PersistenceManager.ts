@@ -1,4 +1,4 @@
-import type { CharacterSchema, MoodState, SessionData } from './types';
+import type { AnyCharacterSchema, MoodState, SessionData } from './types';
 
 export class PersistenceManager {
   private storageKey: string;
@@ -12,7 +12,7 @@ export class PersistenceManager {
   }
 
   // Save the current character to localStorage
-  saveCharacter(character: CharacterSchema): void {
+  saveCharacter(character: AnyCharacterSchema): void {
     try {
       const serialized = JSON.stringify(character);
       localStorage.setItem(this.storageKey, serialized);
@@ -22,13 +22,13 @@ export class PersistenceManager {
   }
 
   // Load a previously saved character from localStorage (returns null if none)
-  loadCharacter(): CharacterSchema | null {
+  loadCharacter(): AnyCharacterSchema | null {
     try {
       const serialized = localStorage.getItem(this.storageKey);
       if (!serialized) {
         return null;
       }
-      return JSON.parse(serialized) as CharacterSchema;
+      return JSON.parse(serialized) as AnyCharacterSchema;
     } catch (error) {
       console.error('Failed to load character:', error);
       return null;
@@ -75,9 +75,9 @@ export class PersistenceManager {
   }
 
   // Save full session state (character + mood + timestamp)
-  saveSession(character: CharacterSchema, mood: MoodState): void {
+  saveSession(character: AnyCharacterSchema, mood: MoodState): void {
     try {
-      const session: SessionData = {
+      const session = {
         character,
         mood,
         timestamp: Date.now()

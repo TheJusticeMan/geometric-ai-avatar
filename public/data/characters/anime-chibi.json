@@ -1,0 +1,575 @@
+{
+  "id": "anime-chibi-1737230400000",
+  "version": "2.0",
+  "style": "chibi",
+  "layers": {
+    "base": [
+      {
+        "type": "path",
+        "id": "head-outline",
+        "z-index": 1,
+        "coordinates": {
+          "d": "M 150 80 Q 150 40 200 40 Q 250 40 250 80 Q 250 130 200 140 Q 150 130 150 80 Z"
+        },
+        "style": {
+          "fill": "#FFE0BD",
+          "stroke": "#2C3E50",
+          "opacity": 1,
+          "strokeWidth": 2,
+          "strokeLinecap": "round",
+          "strokeLinejoin": "round"
+        }
+      },
+      {
+        "type": "path",
+        "id": "head-shadow",
+        "z-index": 2,
+        "coordinates": {
+          "d": "M 200 120 Q 180 125 160 115 Q 165 130 200 140 Q 235 130 240 115 Q 220 125 200 120 Z"
+        },
+        "style": {
+          "fill": "#F4C2A0",
+          "stroke": "none",
+          "opacity": 0.3,
+          "filter": "url(#blur-filter)"
+        }
+      },
+      {
+        "type": "path",
+        "id": "neck",
+        "z-index": 0,
+        "coordinates": {
+          "d": "M 185 130 L 215 130 L 210 150 L 190 150 Z"
+        },
+        "style": {
+          "fill": "#FFE0BD",
+          "stroke": "#2C3E50",
+          "opacity": 1,
+          "strokeWidth": 1.5
+        }
+      },
+      {
+        "type": "path",
+        "id": "body",
+        "z-index": 0,
+        "coordinates": {
+          "d": "M 170 180 L 230 180 Q 235 200 230 220 L 170 220 Q 165 200 170 180 Z"
+        },
+        "style": {
+          "fill": "url(#body-gradient)",
+          "stroke": "#2C3E50",
+          "opacity": 1,
+          "strokeWidth": 2,
+          "strokeLinecap": "round"
+        }
+      }
+    ],
+    "face": [
+      {
+        "type": "path",
+        "id": "left-eye-outline",
+        "z-index": 10,
+        "coordinates": {
+          "d": "M 163 90 Q 163 80 175 80 Q 187 80 187 90 Q 187 100 175 100 Q 163 100 163 90 Z"
+        },
+        "style": {
+          "fill": "#FFFFFF",
+          "stroke": "#2C3E50",
+          "opacity": 1,
+          "strokeWidth": 2.5,
+          "strokeLinecap": "round"
+        }
+      },
+      {
+        "type": "path",
+        "id": "right-eye-outline",
+        "z-index": 10,
+        "coordinates": {
+          "d": "M 213 90 Q 213 80 225 80 Q 237 80 237 90 Q 237 100 225 100 Q 213 100 213 90 Z"
+        },
+        "style": {
+          "fill": "#FFFFFF",
+          "stroke": "#2C3E50",
+          "opacity": 1,
+          "strokeWidth": 2.5,
+          "strokeLinecap": "round"
+        }
+      },
+      {
+        "type": "circle",
+        "id": "left-iris",
+        "z-index": 11,
+        "coordinates": {
+          "cx": 175,
+          "cy": 90,
+          "r": 6
+        },
+        "style": {
+          "fill": "url(#iris-gradient)",
+          "stroke": "none",
+          "opacity": 1
+        }
+      },
+      {
+        "type": "circle",
+        "id": "right-iris",
+        "z-index": 11,
+        "coordinates": {
+          "cx": 225,
+          "cy": 90,
+          "r": 6
+        },
+        "style": {
+          "fill": "url(#iris-gradient)",
+          "stroke": "none",
+          "opacity": 1
+        }
+      },
+      {
+        "type": "circle",
+        "id": "left-pupil",
+        "z-index": 12,
+        "coordinates": {
+          "cx": 175,
+          "cy": 90,
+          "r": 3
+        },
+        "style": {
+          "fill": "#2C3E50",
+          "stroke": "none",
+          "opacity": 1
+        }
+      },
+      {
+        "type": "circle",
+        "id": "right-pupil",
+        "z-index": 12,
+        "coordinates": {
+          "cx": 225,
+          "cy": 90,
+          "r": 3
+        },
+        "style": {
+          "fill": "#2C3E50",
+          "stroke": "none",
+          "opacity": 1
+        }
+      },
+      {
+        "type": "circle",
+        "id": "left-eye-highlight",
+        "z-index": 13,
+        "coordinates": {
+          "cx": 177,
+          "cy": 88,
+          "r": 2
+        },
+        "style": {
+          "fill": "#FFFFFF",
+          "stroke": "none",
+          "opacity": 0.9
+        }
+      },
+      {
+        "type": "circle",
+        "id": "right-eye-highlight",
+        "z-index": 13,
+        "coordinates": {
+          "cx": 227,
+          "cy": 88,
+          "r": 2
+        },
+        "style": {
+          "fill": "#FFFFFF",
+          "stroke": "none",
+          "opacity": 0.9
+        }
+      },
+      {
+        "type": "path",
+        "id": "left-eyebrow",
+        "z-index": 9,
+        "coordinates": {
+          "d": "M 165 78 Q 175 76 185 78"
+        },
+        "style": {
+          "fill": "none",
+          "stroke": "#4A3728",
+          "opacity": 1,
+          "strokeWidth": 2.5,
+          "strokeLinecap": "round"
+        }
+      },
+      {
+        "type": "path",
+        "id": "right-eyebrow",
+        "z-index": 9,
+        "coordinates": {
+          "d": "M 215 78 Q 225 76 235 78"
+        },
+        "style": {
+          "fill": "none",
+          "stroke": "#4A3728",
+          "opacity": 1,
+          "strokeWidth": 2.5,
+          "strokeLinecap": "round"
+        }
+      },
+      {
+        "type": "circle",
+        "id": "nose",
+        "z-index": 10,
+        "coordinates": {
+          "cx": 200,
+          "cy": 105,
+          "r": 1
+        },
+        "style": {
+          "fill": "#F4C2A0",
+          "stroke": "none",
+          "opacity": 0.5
+        }
+      },
+      {
+        "type": "path",
+        "id": "mouth",
+        "z-index": 10,
+        "coordinates": {
+          "d": "M 190 120 L 210 120"
+        },
+        "style": {
+          "fill": "none",
+          "stroke": "#E74C3C",
+          "opacity": 1,
+          "strokeWidth": 2,
+          "strokeLinecap": "round"
+        }
+      }
+    ],
+    "hair": {
+      "front": [
+        {
+          "type": "path",
+          "id": "hair-strand-0",
+          "z-index": 20,
+          "coordinates": {
+            "d": "M 160 55 Q 155 65 160 80 L 168 80 Q 163 65 168 55 Z"
+          },
+          "style": {
+            "fill": "#4A3728",
+            "stroke": "#2C3E50",
+            "opacity": 1,
+            "strokeWidth": 1.5,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round"
+          }
+        },
+        {
+          "type": "path",
+          "id": "hair-strand-1",
+          "z-index": 21,
+          "coordinates": {
+            "d": "M 180 55 Q 185 65 180 83 L 188 83 Q 193 65 188 55 Z"
+          },
+          "style": {
+            "fill": "#6B5346",
+            "stroke": "#2C3E50",
+            "opacity": 1,
+            "strokeWidth": 1.5,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round"
+          }
+        },
+        {
+          "type": "path",
+          "id": "hair-strand-2",
+          "z-index": 22,
+          "coordinates": {
+            "d": "M 200 55 Q 195 65 200 86 L 208 86 Q 203 65 208 55 Z"
+          },
+          "style": {
+            "fill": "#4A3728",
+            "stroke": "#2C3E50",
+            "opacity": 1,
+            "strokeWidth": 1.5,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round"
+          }
+        },
+        {
+          "type": "path",
+          "id": "hair-strand-3",
+          "z-index": 23,
+          "coordinates": {
+            "d": "M 220 55 Q 225 65 220 89 L 228 89 Q 233 65 228 55 Z"
+          },
+          "style": {
+            "fill": "#6B5346",
+            "stroke": "#2C3E50",
+            "opacity": 1,
+            "strokeWidth": 1.5,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round"
+          }
+        },
+        {
+          "type": "path",
+          "id": "hair-strand-4",
+          "z-index": 24,
+          "coordinates": {
+            "d": "M 240 55 Q 235 65 240 92 L 248 92 Q 243 65 248 55 Z"
+          },
+          "style": {
+            "fill": "#4A3728",
+            "stroke": "#2C3E50",
+            "opacity": 1,
+            "strokeWidth": 1.5,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round"
+          }
+        }
+      ],
+      "back": [
+        {
+          "type": "path",
+          "id": "hair-back",
+          "z-index": 0,
+          "coordinates": {
+            "d": "M 145 75 Q 140 40 200 35 Q 260 40 255 75 Q 260 85 255 95 L 250 80 Q 200 130 150 80 L 145 95 Q 140 85 145 75 Z"
+          },
+          "style": {
+            "fill": "url(#hair-gradient)",
+            "stroke": "#2C3E50",
+            "opacity": 1,
+            "strokeWidth": 2,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round"
+          }
+        }
+      ]
+    },
+    "clothing": [
+      {
+        "type": "path",
+        "id": "shirt",
+        "z-index": 5,
+        "coordinates": {
+          "d": "M 160 150 L 240 150 L 245 190 L 235 210 L 165 210 L 155 190 Z"
+        },
+        "style": {
+          "fill": "url(#clothing-gradient)",
+          "stroke": "#2C3E50",
+          "opacity": 1,
+          "strokeWidth": 2,
+          "strokeLinecap": "round"
+        }
+      },
+      {
+        "type": "path",
+        "id": "collar",
+        "z-index": 6,
+        "coordinates": {
+          "d": "M 185 150 L 200 160 L 215 150"
+        },
+        "style": {
+          "fill": "none",
+          "stroke": "#C0392B",
+          "opacity": 1,
+          "strokeWidth": 2,
+          "strokeLinecap": "round"
+        }
+      }
+    ],
+    "effects": [
+      {
+        "type": "circle",
+        "id": "blush-left",
+        "z-index": 15,
+        "coordinates": {
+          "cx": 170,
+          "cy": 100,
+          "r": 8
+        },
+        "style": {
+          "fill": "#FF6B9D",
+          "stroke": "none",
+          "opacity": 0
+        }
+      },
+      {
+        "type": "circle",
+        "id": "blush-right",
+        "z-index": 15,
+        "coordinates": {
+          "cx": 230,
+          "cy": 100,
+          "r": 8
+        },
+        "style": {
+          "fill": "#FF6B9D",
+          "stroke": "none",
+          "opacity": 0
+        }
+      },
+      {
+        "type": "path",
+        "id": "sweat-drop",
+        "z-index": 16,
+        "coordinates": {
+          "d": "M 235 75 Q 240 78 237 83 Q 235 85 233 83 Q 230 78 235 75 Z"
+        },
+        "style": {
+          "fill": "#87CEEB",
+          "stroke": "#4A90E2",
+          "opacity": 0,
+          "strokeWidth": 1
+        }
+      },
+      {
+        "type": "path",
+        "id": "sparkle-0",
+        "z-index": 17,
+        "coordinates": {
+          "d": "M 140 56 L 141 59 L 144 60 L 141 61 L 140 64 L 139 61 L 136 60 L 139 59 Z"
+        },
+        "style": {
+          "fill": "#FFD700",
+          "stroke": "none",
+          "opacity": 0
+        }
+      },
+      {
+        "type": "path",
+        "id": "sparkle-1",
+        "z-index": 17,
+        "coordinates": {
+          "d": "M 180 66 L 181 69 L 184 70 L 181 71 L 180 74 L 179 71 L 176 70 L 179 69 Z"
+        },
+        "style": {
+          "fill": "#FFD700",
+          "stroke": "none",
+          "opacity": 0
+        }
+      },
+      {
+        "type": "path",
+        "id": "sparkle-2",
+        "z-index": 17,
+        "coordinates": {
+          "d": "M 220 76 L 221 79 L 224 80 L 221 81 L 220 84 L 219 81 L 216 80 L 219 79 Z"
+        },
+        "style": {
+          "fill": "#FFD700",
+          "stroke": "none",
+          "opacity": 0
+        }
+      },
+      {
+        "type": "path",
+        "id": "angry-vein",
+        "z-index": 16,
+        "coordinates": {
+          "d": "M 230 70 L 235 65 M 235 70 L 230 65"
+        },
+        "style": {
+          "fill": "none",
+          "stroke": "#E74C3C",
+          "opacity": 0,
+          "strokeWidth": 3,
+          "strokeLinecap": "round"
+        }
+      }
+    ]
+  },
+  "expressions": {
+    "current": "neutral",
+    "presets": {
+      "neutral": {
+        "eyes": {
+          "leftEye": { "openness": 1, "irisSize": 0.5, "irisOffsetX": 0, "irisOffsetY": 0 },
+          "rightEye": { "openness": 1, "irisSize": 0.5, "irisOffsetX": 0, "irisOffsetY": 0 },
+          "eyebrows": { "leftAngle": 0, "rightAngle": 0, "leftHeight": 0, "rightHeight": 0 }
+        },
+        "mouth": { "shape": "neutral", "openness": 0, "width": 1 },
+        "effects": { "blush": 0, "sweatDrop": false, "sparkles": false, "angryVein": false }
+      },
+      "happy": {
+        "eyes": {
+          "leftEye": { "openness": 0.7, "irisSize": 0.6, "irisOffsetX": 0, "irisOffsetY": -0.1 },
+          "rightEye": { "openness": 0.7, "irisSize": 0.6, "irisOffsetX": 0, "irisOffsetY": -0.1 },
+          "eyebrows": { "leftAngle": -5, "rightAngle": 5, "leftHeight": 2, "rightHeight": 2 }
+        },
+        "mouth": { "shape": "smile", "openness": 0.3, "width": 1.2 },
+        "effects": { "blush": 0, "sweatDrop": false, "sparkles": true, "angryVein": false }
+      }
+    }
+  },
+  "gradients": [
+    {
+      "id": "iris-gradient",
+      "type": "radial",
+      "stops": [
+        { "offset": "0%", "color": "#87CEEB", "opacity": 1 },
+        { "offset": "50%", "color": "#4A90E2", "opacity": 1 },
+        { "offset": "100%", "color": "#4A90E2", "opacity": 1 }
+      ],
+      "cx": "50%",
+      "cy": "30%",
+      "r": "50%"
+    },
+    {
+      "id": "hair-gradient",
+      "type": "linear",
+      "stops": [
+        { "offset": "0%", "color": "#6B5346", "opacity": 1 },
+        { "offset": "50%", "color": "#4A3728", "opacity": 1 },
+        { "offset": "100%", "color": "#4A3728", "opacity": 1 }
+      ],
+      "x1": "0%",
+      "y1": "0%",
+      "x2": "0%",
+      "y2": "100%"
+    },
+    {
+      "id": "body-gradient",
+      "type": "linear",
+      "stops": [
+        { "offset": "0%", "color": "#FFE0BD", "opacity": 1 },
+        { "offset": "100%", "color": "#F4C2A0", "opacity": 1 }
+      ],
+      "x1": "0%",
+      "y1": "0%",
+      "x2": "0%",
+      "y2": "100%"
+    },
+    {
+      "id": "clothing-gradient",
+      "type": "linear",
+      "stops": [
+        { "offset": "0%", "color": "#E74C3C", "opacity": 1 },
+        { "offset": "100%", "color": "#C0392B", "opacity": 1 }
+      ],
+      "x1": "0%",
+      "y1": "0%",
+      "x2": "0%",
+      "y2": "100%"
+    }
+  ],
+  "filters": [
+    {
+      "id": "blur-filter",
+      "type": "blur",
+      "params": { "stdDeviation": 3 }
+    },
+    {
+      "id": "glow-filter",
+      "type": "glow",
+      "params": { "stdDeviation": 2, "floodColor": "#FFD700", "floodOpacity": 0.7 }
+    },
+    {
+      "id": "shadow-filter",
+      "type": "shadow",
+      "params": { "dx": 2, "dy": 2, "stdDeviation": 2, "floodColor": "#000000", "floodOpacity": 0.3 }
+    }
+  ]
+}

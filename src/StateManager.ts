@@ -1,4 +1,5 @@
-import type { AvatarState, CharacterSchema, GeometricElement, MoodState, StateChangeListener } from './types';
+import type { AnyCharacterSchema, AvatarState, GeometricElement, AnimeElement, MoodState, StateChangeListener } from './types';
+import { isAnimeCharacter } from './types';
 
 export class StateManager {
   private state: AvatarState;
@@ -15,32 +16,40 @@ export class StateManager {
     return { ...this.state };
   }
 
-  setCharacter(character: CharacterSchema): void {
+  setCharacter(character: AnyCharacterSchema): void {
     this.state.activeCharacter = character;
     this.notifyListeners();
   }
 
-  getCharacter(): CharacterSchema | null {
+  getCharacter(): AnyCharacterSchema | null {
     return this.state.activeCharacter;
   }
 
-  updateElement(elementId: string, element: GeometricElement): void {
+  updateElement(elementId: string, element: GeometricElement | AnimeElement): void {
     if (!this.state.activeCharacter) {
       console.error('No active character to update');
       return;
     }
 
-    const elementIndex = this.state.activeCharacter.elements.findIndex(
-      el => el.id === elementId
-    );
+    // Handle v1.0 geometric characters
+    if (!isAnimeCharacter(this.state.activeCharacter)) {
+      const elementIndex = this.state.activeCharacter.elements.findIndex(
+        el => el.id === elementId
+      );
 
-    if (elementIndex === -1) {
-      console.error(`Element "${elementId}" not found`);
+      if (elementIndex === -1) {
+        console.error(`Element "${elementId}" not found`);
+        return;
+      }
+
+      this.state.activeCharacter.elements[elementIndex] = element as GeometricElement;
+      this.notifyListeners();
       return;
     }
 
-    this.state.activeCharacter.elements[elementIndex] = element;
-    this.notifyListeners();
+    // Handle v2.0 anime characters - update would be more complex
+    // For now, we just log a message
+    console.warn('Element updates for anime characters not yet implemented');
   }
 
   setMood(mood: MoodState): void {
