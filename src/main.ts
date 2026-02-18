@@ -4,6 +4,8 @@ import { StateManager } from './StateManager';
 import { PersonalityMapper } from './PersonalityMapper';
 import { Mirror } from './Mirror';
 import { SchemaValidator } from './SchemaValidator';
+import { PersistenceManager } from './PersistenceManager';
+import { LLMBridge } from './LLMBridge';
 import type { CharacterSchema, MoodState } from './types';
 
 // Animation timing constants
@@ -24,6 +26,8 @@ class GeometricAvatarApp {
   private personalityMapper: PersonalityMapper;
   private mirror: Mirror;
   private validator: SchemaValidator;
+  private persistence: PersistenceManager;
+  private llmBridge: LLMBridge;
   private svgContainer: SVGSVGElement | null = null;
   private originalCharacter: CharacterSchema | null = null;
 
@@ -33,6 +37,8 @@ class GeometricAvatarApp {
     this.personalityMapper = new PersonalityMapper();
     this.mirror = new Mirror();
     this.validator = new SchemaValidator();
+    this.persistence = new PersistenceManager();
+    this.llmBridge = new LLMBridge();
   }
 
   async initialize(): Promise<void> {
@@ -47,8 +53,13 @@ class GeometricAvatarApp {
     // Initialize parser
     this.parser = new AvatarParser(this.svgContainer);
 
-    // Load default character
-    await this.loadDefaultCharacter();
+    // Try to load saved session first, otherwise load default
+    const savedSession = this.persistence.loadSession();
+    if (savedSession) {
+      await this.loadSavedSession(savedSession);
+    } else {
+      await this.loadDefaultCharacter();
+    }
 
     // Set up event listeners
     this.setupEventListeners();
@@ -56,6 +67,13 @@ class GeometricAvatarApp {
     // Set up state change listener
     this.stateManager.onStateChange(state => {
       this.updateMirror();
+      this.updateJSONEditor();
+      
+      // Auto-save session on state changes
+      this.persistence.saveSession(
+        state.activeCharacter || this.originalCharacter!,
+        state.currentMood
+      );
       
       // Update character rendering when state changes
       if (state.activeCharacter && this.parser) {
@@ -66,8 +84,35 @@ class GeometricAvatarApp {
     // Load and start default animations
     await this.loadDefaultAnimations();
 
-    // Initial mirror update
+    // Initial UI updates
     this.updateMirror();
+    this.updateJSONEditor();
+    this.updateSessionIndicator();
+  }
+
+  private async loadSavedSession(session: { character: CharacterSchema; mood: MoodState; timestamp: number }): Promise<void> {
+    // Validate the saved character
+    const validation = this.validator.validateCharacterSchema(session.character);
+    if (!validation.valid) {
+      console.error('Invalid saved character, loading default:', validation.errors);
+      await this.loadDefaultCharacter();
+      return;
+    }
+
+    // Set the character and mood
+    this.stateManager.setCharacter(session.character);
+    this.stateManager.setMood(session.mood);
+    
+    // Store as original character for mood modifiers
+    this.originalCharacter = JSON.parse(JSON.stringify(session.character));
+
+    // Update mood button styling
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`[data-mood="${session.mood}"]`)?.classList.add('active');
+
+    this.updateSessionIndicator(true);
   }
 
   private async loadDefaultCharacter(): Promise<void> {
@@ -143,6 +188,54 @@ class GeometricAvatarApp {
           handleMessage();
         }
       });
+    }
+
+    // JSON Editor controls
+    const applyJsonBtn = document.getElementById('apply-json-btn');
+    const resetJsonBtn = document.getElementById('reset-json-btn');
+    
+    if (applyJsonBtn) {
+      applyJsonBtn.addEventListener('click', () => this.handleApplyJSON());
+    }
+    
+    if (resetJsonBtn) {
+      resetJsonBtn.addEventListener('click', () => this.handleResetToDefault());
+    }
+
+    // LLM Integration controls
+    const copyPromptBtn = document.getElementById('copy-prompt-btn');
+    const applyLlmBtn = document.getElementById('apply-llm-btn');
+    
+    if (copyPromptBtn) {
+      copyPromptBtn.addEventListener('click', () => this.handleCopyPrompt());
+    }
+    
+    if (applyLlmBtn) {
+      applyLlmBtn.addEventListener('click', () => this.handleApplyLLMResponse());
+    }
+
+    // Character Management controls
+    const exportBtn = document.getElementById('export-btn');
+    const importBtn = document.getElementById('import-btn');
+    const importInput = document.getElementById('import-input') as HTMLInputElement;
+    const saveSessionBtn = document.getElementById('save-session-btn');
+    const clearSavedBtn = document.getElementById('clear-saved-btn');
+    
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => this.handleExport());
+    }
+    
+    if (importBtn && importInput) {
+      importBtn.addEventListener('click', () => importInput.click());
+      importInput.addEventListener('change', (e) => this.handleImport(e));
+    }
+    
+    if (saveSessionBtn) {
+      saveSessionBtn.addEventListener('click', () => this.handleSaveSession());
+    }
+    
+    if (clearSavedBtn) {
+      clearSavedBtn.addEventListener('click', () => this.handleClearSaved());
     }
   }
 
@@ -242,6 +335,243 @@ class GeometricAvatarApp {
     );
 
     mirrorOutput.textContent = description;
+  }
+
+  private updateJSONEditor(): void {
+    const jsonEditor = document.getElementById('json-editor') as HTMLTextAreaElement;
+    if (!jsonEditor) return;
+
+    const character = this.stateManager.getCharacter();
+    if (character) {
+      jsonEditor.value = JSON.stringify(character, null, 2);
+    }
+  }
+
+  private updateSessionIndicator(isSaved: boolean = false): void {
+    const indicator = document.getElementById('session-indicator');
+    if (!indicator) return;
+
+    if (isSaved || this.persistence.loadSession()) {
+      indicator.textContent = '✓ Saved Session Loaded';
+      indicator.classList.remove('default');
+    } else {
+      indicator.textContent = 'Using Default Character';
+      indicator.classList.add('default');
+    }
+  }
+
+  private showError(containerId: string, message: string): void {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.textContent = message;
+    container.classList.add('show');
+    
+    setTimeout(() => {
+      container.classList.remove('show');
+    }, 5000);
+  }
+
+  private showSuccess(containerId: string, message: string): void {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.textContent = message;
+    container.classList.add('show');
+    
+    setTimeout(() => {
+      container.classList.remove('show');
+    }, 3000);
+  }
+
+  private handleApplyJSON(): void {
+    const jsonEditor = document.getElementById('json-editor') as HTMLTextAreaElement;
+    if (!jsonEditor) return;
+
+    try {
+      const jsonText = jsonEditor.value.trim();
+      const parsed = JSON.parse(jsonText);
+      
+      // Validate the schema
+      const validation = this.validator.validateCharacterSchema(parsed);
+      if (!validation.valid) {
+        this.showError('json-error', 'Validation errors:\n' + validation.errors.join('\n'));
+        return;
+      }
+
+      // Apply the character
+      const character = parsed as CharacterSchema;
+      this.stateManager.setCharacter(character);
+      this.originalCharacter = JSON.parse(JSON.stringify(character));
+      
+      // Re-apply mood modifiers
+      this.applyMoodModifiers(this.stateManager.getMood());
+      
+      this.showSuccess('json-success', 'Character JSON applied successfully!');
+    } catch (error) {
+      this.showError('json-error', `Parse error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private async handleResetToDefault(): Promise<void> {
+    try {
+      const response = await fetch('/data/characters/default.json');
+      const characterData = await response.json();
+      
+      const validation = this.validator.validateCharacterSchema(characterData);
+      if (!validation.valid) {
+        this.showError('json-error', 'Default character is invalid');
+        return;
+      }
+
+      this.stateManager.setCharacter(characterData as CharacterSchema);
+      this.originalCharacter = JSON.parse(JSON.stringify(characterData));
+      
+      // Reset mood to neutral
+      this.stateManager.setMood('neutral');
+      document.querySelectorAll('.mood-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector('[data-mood="neutral"]')?.classList.add('active');
+      
+      this.showSuccess('json-success', 'Reset to default character!');
+    } catch (error) {
+      this.showError('json-error', `Failed to reset: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private handleCopyPrompt(): void {
+    const character = this.stateManager.getCharacter();
+    if (!character || !this.svgContainer) return;
+
+    const llmContext = this.mirror.generateLLMContext(
+      character,
+      this.stateManager.getMood(),
+      this.svgContainer
+    );
+
+    const systemPrompt = this.llmBridge.generateSystemPrompt(llmContext, character);
+    const fullPrompt = `${systemPrompt}\n\n---\n\nPlease modify this avatar as requested by the user.`;
+
+    navigator.clipboard.writeText(fullPrompt)
+      .then(() => {
+        this.showSuccess('llm-success', 'LLM prompt copied to clipboard!');
+      })
+      .catch(error => {
+        this.showError('llm-error', `Failed to copy: ${error instanceof Error ? error.message : String(error)}`);
+      });
+  }
+
+  private handleApplyLLMResponse(): void {
+    const responseTextarea = document.getElementById('llm-response') as HTMLTextAreaElement;
+    if (!responseTextarea) return;
+
+    const response = responseTextarea.value.trim();
+    if (!response) {
+      this.showError('llm-error', 'Please paste an LLM response first');
+      return;
+    }
+
+    const result = this.llmBridge.parseResponse(response);
+    
+    if (!result.character) {
+      this.showError('llm-error', result.message);
+      return;
+    }
+
+    // Apply the character
+    this.stateManager.setCharacter(result.character);
+    this.originalCharacter = JSON.parse(JSON.stringify(result.character));
+    
+    // Re-apply mood modifiers
+    this.applyMoodModifiers(this.stateManager.getMood());
+    
+    this.showSuccess('llm-success', result.message);
+    responseTextarea.value = '';
+  }
+
+  private handleExport(): void {
+    const character = this.stateManager.getCharacter();
+    if (!character) {
+      this.showError('management-error', 'No character to export');
+      return;
+    }
+
+    try {
+      const jsonString = JSON.stringify(character, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const filename = `${character.id}-${timestamp}.json`;
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      this.showSuccess('management-success', `Exported as ${filename}`);
+    } catch (error) {
+      this.showError('management-error', `Export failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private handleImport(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e): void => {
+      try {
+        const content = e.target?.result as string;
+        const parsed = JSON.parse(content);
+        
+        const validation = this.validator.validateCharacterSchema(parsed);
+        if (!validation.valid) {
+          this.showError('management-error', 'Invalid character file:\n' + validation.errors.join('\n'));
+          return;
+        }
+
+        const character = parsed as CharacterSchema;
+        this.stateManager.setCharacter(character);
+        this.originalCharacter = JSON.parse(JSON.stringify(character));
+        
+        // Re-apply mood modifiers
+        this.applyMoodModifiers(this.stateManager.getMood());
+        
+        this.showSuccess('management-success', `Imported ${file.name} successfully!`);
+      } catch (error) {
+        this.showError('management-error', `Import failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      
+      // Reset the input
+      input.value = '';
+    };
+    
+    reader.readAsText(file);
+  }
+
+  private handleSaveSession(): void {
+    const character = this.stateManager.getCharacter();
+    if (!character) {
+      this.showError('management-error', 'No character to save');
+      return;
+    }
+
+    this.persistence.saveSession(character, this.stateManager.getMood());
+    this.updateSessionIndicator(true);
+    this.showSuccess('management-success', 'Session saved to browser storage!');
+  }
+
+  private handleClearSaved(): void {
+    this.persistence.clearSaved();
+    this.updateSessionIndicator(false);
+    this.showSuccess('management-success', 'Saved session cleared!');
   }
 }
 
