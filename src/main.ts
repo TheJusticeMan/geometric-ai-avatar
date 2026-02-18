@@ -14,6 +14,7 @@ class GeometricAvatarApp {
   private mirror: Mirror;
   private validator: SchemaValidator;
   private svgContainer: SVGSVGElement | null = null;
+  private originalCharacter: CharacterSchema | null = null;
 
   constructor() {
     this.animationEngine = new AnimationEngine();
@@ -72,6 +73,9 @@ class GeometricAvatarApp {
 
       // Set the character
       this.stateManager.setCharacter(characterData as CharacterSchema);
+      
+      // Store original character for mood modifiers
+      this.originalCharacter = JSON.parse(JSON.stringify(characterData));
 
       // Render the character
       if (this.parser) {
@@ -137,19 +141,21 @@ class GeometricAvatarApp {
   }
 
   private applyMoodModifiers(mood: MoodState): void {
-    const character = this.stateManager.getCharacter();
-    if (!character || !this.parser) return;
+    if (!this.originalCharacter || !this.parser) return;
 
+    // Create a fresh copy from original character
+    const character: CharacterSchema = JSON.parse(JSON.stringify(this.originalCharacter));
     const modifiers = this.personalityMapper.getGeometricModifiers(mood);
 
     // Apply modifiers to character elements
     character.elements.forEach(element => {
       if (element.id.includes('eye') && element.type === 'circle' && modifiers.eyeRadiusMultiplier) {
-        const originalRadius = 5; // Default eye radius
-        element.coordinates.r = originalRadius * modifiers.eyeRadiusMultiplier;
-        this.parser?.updateElement(element.id, element);
+        element.coordinates.r = element.coordinates.r * modifiers.eyeRadiusMultiplier;
       }
     });
+
+    // Update state with modified character
+    this.stateManager.setCharacter(character);
 
     // Re-render with modified character
     this.parser.render(character);

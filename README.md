@@ -52,9 +52,11 @@ geometric-ai-avatar/
 │       └── idle.json         # Default idle animations
 ├── index.html                # Browser UI
 ├── package.json              # Dependencies and scripts
+├── package-lock.json         # Locked dependency versions
 ├── tsconfig.json             # TypeScript configuration
 ├── vite.config.ts            # Vite build configuration
 └── .eslintrc.json            # ESLint configuration
+```
 
 ## Defining Custom Characters
 

@@ -13,6 +13,10 @@ export class AvatarParser {
     // Clear existing elements
     this.clear();
 
+    // Create a root group for animations
+    const rootGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    rootGroup.setAttribute('id', 'avatar-root');
+
     // Sort elements by z-index
     const sortedElements = [...schema.elements].sort((a, b) => a['z-index'] - b['z-index']);
 
@@ -20,10 +24,13 @@ export class AvatarParser {
     sortedElements.forEach(element => {
       const svgElement = this.createElement(element);
       if (svgElement) {
-        this.container.appendChild(svgElement);
+        rootGroup.appendChild(svgElement);
         this.elementCache.set(element.id, svgElement);
       }
     });
+
+    // Add root group to container
+    this.container.appendChild(rootGroup);
   }
 
   updateElement(elementId: string, element: GeometricElement): void {
