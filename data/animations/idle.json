@@ -20,5 +20,27 @@
     ],
     "easing": "easeInOutQuad",
     "loop": true
+  },
+  {
+    "targetId": "avatar-root",
+    "property": "transform",
+    "timeline": [
+      { "offset": "0%", "value": "translateY(-5)" },
+      { "offset": "50%", "value": "translateY(5)" },
+      { "offset": "100%", "value": "translateY(-5)" }
+    ],
+    "easing": "easeInOutSine",
+    "loop": true
+  },
+  {
+    "targetId": "torso",
+    "property": "transform",
+    "timeline": [
+      { "offset": "0%", "value": "scale(1)" },
+      { "offset": "50%", "value": "scale(1.05)" },
+      { "offset": "100%", "value": "scale(1)" }
+    ],
+    "easing": "easeInOutSine",
+    "loop": true
   }
 ]
