@@ -154,43 +154,8 @@ export class AnimationEngine {
       // Parse transform values to determine type
       const firstValue = schema.timeline[0]?.value;
       if (typeof firstValue === 'string') {
-        if (firstValue.includes('translateY')) {
-          // Extract translateY values
-          animeParams.translateY = schema.timeline.map(kf => {
-            const match = String(kf.value).match(/translateY\(([-\d.]+)\)/);
-            return {
-              value: match ? parseFloat(match[1]) : 0,
-              duration: this.parseOffset(kf.offset)
-            };
-          });
-        } else if (firstValue.includes('translateX')) {
-          // Extract translateX values
-          animeParams.translateX = schema.timeline.map(kf => {
-            const match = String(kf.value).match(/translateX\(([-\d.]+)\)/);
-            return {
-              value: match ? parseFloat(match[1]) : 0,
-              duration: this.parseOffset(kf.offset)
-            };
-          });
-        } else if (firstValue.includes('scale')) {
-          // Extract scale values
-          animeParams.scale = schema.timeline.map(kf => {
-            const match = String(kf.value).match(/scale\(([-\d.]+)\)/);
-            return {
-              value: match ? parseFloat(match[1]) : 1,
-              duration: this.parseOffset(kf.offset)
-            };
-          });
-        } else if (firstValue.includes('rotate')) {
-          // Extract rotate values
-          animeParams.rotate = schema.timeline.map(kf => {
-            const match = String(kf.value).match(/rotate\(([-\d.]+)\)/);
-            return {
-              value: match ? parseFloat(match[1]) : 0,
-              duration: this.parseOffset(kf.offset)
-            };
-          });
-        }
+        const transformParams = this.parseTransformTimeline(schema);
+        Object.assign(animeParams, transformParams);
       } else {
         // Assume rotate for numeric values
         animeParams.rotate = schema.timeline.map(kf => ({
@@ -207,6 +172,59 @@ export class AnimationEngine {
 
     const animation = animate(target, animeParams);
     this.activeAnimations.push(animation);
+  }
+
+  private parseTransformTimeline(schema: AnimationSchema): Partial<AnimationParams> {
+    const params: Partial<AnimationParams> = {};
+    const firstValue = String(schema.timeline[0]?.value);
+
+    if (firstValue.includes('translateY')) {
+      params.translateY = schema.timeline.map(kf => {
+        const match = String(kf.value).match(/translateY\(([-\d.]+)\)/);
+        if (!match) {
+          console.warn(`Invalid translateY value: ${kf.value}`);
+        }
+        return {
+          value: match ? parseFloat(match[1]) : 0,
+          duration: this.parseOffset(kf.offset)
+        };
+      });
+    } else if (firstValue.includes('translateX')) {
+      params.translateX = schema.timeline.map(kf => {
+        const match = String(kf.value).match(/translateX\(([-\d.]+)\)/);
+        if (!match) {
+          console.warn(`Invalid translateX value: ${kf.value}`);
+        }
+        return {
+          value: match ? parseFloat(match[1]) : 0,
+          duration: this.parseOffset(kf.offset)
+        };
+      });
+    } else if (firstValue.includes('scale')) {
+      params.scale = schema.timeline.map(kf => {
+        const match = String(kf.value).match(/scale\(([-\d.]+)\)/);
+        if (!match) {
+          console.warn(`Invalid scale value: ${kf.value}`);
+        }
+        return {
+          value: match ? parseFloat(match[1]) : 1,
+          duration: this.parseOffset(kf.offset)
+        };
+      });
+    } else if (firstValue.includes('rotate')) {
+      params.rotate = schema.timeline.map(kf => {
+        const match = String(kf.value).match(/rotate\(([-\d.]+)\)/);
+        if (!match) {
+          console.warn(`Invalid rotate value: ${kf.value}`);
+        }
+        return {
+          value: match ? parseFloat(match[1]) : 0,
+          duration: this.parseOffset(kf.offset)
+        };
+      });
+    }
+
+    return params;
   }
 
   triggerAnimation(trigger: AnimationTrigger): void {

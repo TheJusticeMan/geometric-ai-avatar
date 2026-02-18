@@ -173,6 +173,7 @@ class GeometricAvatarApp {
       }, BLINK_TO_PROCESSING_DELAY);
       
       // Auto-resolve after duration proportional to message length
+      // Formula: base 2s + 10ms per char beyond 100 chars, capped at 5s
       const processingDuration = Math.min(
         MAX_PROCESSING_DURATION,
         BASE_PROCESSING_DURATION + (messageLength - MEDIUM_MESSAGE_THRESHOLD) * DURATION_PER_CHAR
@@ -185,6 +186,7 @@ class GeometricAvatarApp {
 
   private resetToIdleAnimations(): void {
     this.animationEngine.stopAll();
+    // onLoad trigger starts the idle animations (float and breathe)
     this.animationEngine.triggerAnimation('onLoad');
   }
 
