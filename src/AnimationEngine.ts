@@ -1,5 +1,5 @@
 import { animate, type AnimationParams } from 'animejs';
-import type { AnimationSchema, AnimationTrigger } from './types';
+import type { AnimationSchema, AnimationTrigger, MoodState } from './types';
 
 export interface AnimationPreset {
   name: string;
@@ -66,6 +66,45 @@ export class AnimationEngine {
         rotate: 360,
         easing: 'linear',
         duration: 8000,
+        loop: true
+      }
+    });
+
+    // Pulse animation - high-frequency scale oscillation (energetic mood)
+    this.presets.set('pulse', {
+      name: 'pulse',
+      targetIds: ['arm-left', 'arm-right'],
+      animation: {
+        scale: [1, 1.15],
+        easing: 'easeInOutQuad',
+        duration: 500,
+        loop: true,
+        direction: 'alternate'
+      }
+    });
+
+    // Tilt animation - slow head circle oscillation (pensive mood)
+    this.presets.set('tilt', {
+      name: 'tilt',
+      targetIds: ['head'],
+      animation: {
+        translateX: [-10, 10],
+        easing: 'easeInOutSine',
+        duration: 3000,
+        loop: true,
+        direction: 'alternate'
+      }
+    });
+
+    // Jitter animation - rapid small position resets (erroneous mood)
+    this.presets.set('jitter', {
+      name: 'jitter',
+      targetIds: ['torso'],
+      animation: {
+        translateX: [-3, 3, -2, 2, -1, 1, 0],
+        translateY: [-2, 2, -3, 3, -1, 1, 0],
+        easing: 'linear',
+        duration: 200,
         loop: true
       }
     });
@@ -140,7 +179,33 @@ export class AnimationEngine {
         this.playPreset('ponder');
         break;
       case 'onMoodChange':
-        // Handled by PersonalityMapper
+        // Handled by triggerMoodAnimation
+        break;
+    }
+  }
+
+  triggerMoodAnimation(mood: MoodState): void {
+    // Play mood-specific animations
+    switch (mood) {
+      case 'analytical':
+        // Slow, 360-degree rotation of the torso
+        this.playPreset('ponder');
+        break;
+      case 'energetic':
+        // High-frequency pulse of secondary shapes
+        this.playPreset('pulse');
+        break;
+      case 'pensive':
+        // Slow easeInOutSine tilt of the head circle
+        this.playPreset('tilt');
+        break;
+      case 'erroneous':
+        // Rapid, non-easing position resets
+        this.playPreset('jitter');
+        break;
+      case 'neutral':
+      default:
+        // Standard float + breathe (handled by onLoad trigger)
         break;
     }
   }

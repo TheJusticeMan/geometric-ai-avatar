@@ -123,7 +123,7 @@ class GeometricAvatarApp {
     this.applyMoodModifiers(mood);
 
     // Trigger mood-specific animations
-    this.animationEngine.triggerAnimation('onMoodChange');
+    this.animationEngine.triggerMoodAnimation(mood);
     
     // Restart idle animations with mood-specific parameters
     this.animationEngine.triggerAnimation('onLoad');
