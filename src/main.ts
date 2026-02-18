@@ -450,8 +450,7 @@ class GeometricAvatarApp {
       this.svgContainer
     );
 
-    const systemPrompt = this.llmBridge.generateSystemPrompt(llmContext, character);
-    const fullPrompt = `${systemPrompt}\n\n---\n\nPlease modify this avatar as requested by the user.`;
+    const fullPrompt = this.llmBridge.getFullPromptForCopy(llmContext, character);
 
     navigator.clipboard.writeText(fullPrompt)
       .then(() => {

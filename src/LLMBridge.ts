@@ -172,10 +172,14 @@ Please provide the complete modified character JSON wrapped in \`\`\`json code f
   }
 
   // Get the full system prompt as copyable text (for manual LLM use)
-  getFullPromptForCopy(mirrorOutput: string, userMessage: string): string {
-    const systemPrompt = this.generateSystemPrompt(mirrorOutput, JSON.parse(mirrorOutput) as CharacterSchema);
-    const userPrompt = this.generateUserPrompt(mirrorOutput, userMessage);
+  getFullPromptForCopy(mirrorOutput: string, character: CharacterSchema, userMessage: string = ''): string {
+    const systemPrompt = this.generateSystemPrompt(mirrorOutput, character);
     
-    return `${systemPrompt}\n\n---\n\n${userPrompt}`;
+    if (userMessage) {
+      const userPrompt = this.generateUserPrompt(mirrorOutput, userMessage);
+      return `${systemPrompt}\n\n---\n\n${userPrompt}`;
+    }
+    
+    return `${systemPrompt}\n\n---\n\nPlease modify this avatar as requested by the user.`;
   }
 }
