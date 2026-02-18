@@ -1,0 +1,125 @@
+{
+  "id": "scholar-avatar",
+  "version": "1.0",
+  "elements": [
+    {
+      "type": "circle",
+      "id": "head",
+      "z-index": 2,
+      "coordinates": {
+        "cx": 200,
+        "cy": 100,
+        "r": 35
+      },
+      "style": {
+        "fill": "#AEB6BF",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "cap",
+      "z-index": 2,
+      "coordinates": {
+        "points": [
+          [200, 60],
+          [220, 70],
+          [220, 80],
+          [200, 90],
+          [180, 80],
+          [180, 70]
+        ]
+      },
+      "style": {
+        "fill": "#2E4053",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "torso",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [170, 130],
+          [230, 130],
+          [240, 250],
+          [160, 250]
+        ]
+      },
+      "style": {
+        "fill": "#5D6D7E",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "circle",
+      "id": "eye-left",
+      "z-index": 3,
+      "coordinates": {
+        "cx": 190,
+        "cy": 95,
+        "r": 3
+      },
+      "style": {
+        "fill": "#1ABC9C",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "circle",
+      "id": "eye-right",
+      "z-index": 3,
+      "coordinates": {
+        "cx": 210,
+        "cy": 95,
+        "r": 3
+      },
+      "style": {
+        "fill": "#1ABC9C",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "arm-left",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [160, 140],
+          [150, 220],
+          [165, 220],
+          [170, 140]
+        ]
+      },
+      "style": {
+        "fill": "#34495E",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "arm-right",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [240, 140],
+          [250, 220],
+          [235, 220],
+          [230, 140]
+        ]
+      },
+      "style": {
+        "fill": "#34495E",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    }
+  ]
+}

@@ -85,7 +85,7 @@ The avatar is defined by a JSON schema with the following structure:
       "type": "circle",
       "id": "left-eye",
       "z-index": 3,
-      "coordinates": { "cx": 170, "cy": 180, "r": 8 },  // increased radius from 5 to 8
+      "coordinates": { "cx": 170, "cy": 180, "r": 8 },
       "style": { "fill": "#2C3E50", "stroke": "#34495E", "opacity": 1 }
     }
   ]
@@ -99,8 +99,8 @@ The avatar is defined by a JSON schema with the following structure:
   "id": "head",
   "coordinates": { "cx": 200, "cy": 200, "r": 80 },
   "style": { 
-    "fill": "#3498DB",      // changed from original color
-    "stroke": "#2980B9",    // changed from original color
+    "fill": "#3498DB",
+    "stroke": "#2980B9",
     "opacity": 1 
   }
 }

@@ -6,6 +6,8 @@ import { Mirror } from './Mirror';
 import { SchemaValidator } from './SchemaValidator';
 import { PersistenceManager } from './PersistenceManager';
 import { LLMBridge } from './LLMBridge';
+import { PhysicsEngine } from './PhysicsEngine';
+import { CharacterGallery } from './CharacterGallery';
 import type { CharacterSchema, MoodState } from './types';
 
 // Animation timing constants
@@ -28,6 +30,8 @@ class GeometricAvatarApp {
   private validator: SchemaValidator;
   private persistence: PersistenceManager;
   private llmBridge: LLMBridge;
+  private physicsEngine: PhysicsEngine | null = null;
+  private characterGallery: CharacterGallery;
   private svgContainer: SVGSVGElement | null = null;
   private originalCharacter: CharacterSchema | null = null;
 
@@ -39,6 +43,7 @@ class GeometricAvatarApp {
     this.validator = new SchemaValidator();
     this.persistence = new PersistenceManager();
     this.llmBridge = new LLMBridge();
+    this.characterGallery = new CharacterGallery();
   }
 
   async initialize(): Promise<void> {
@@ -53,6 +58,10 @@ class GeometricAvatarApp {
     // Initialize parser
     this.parser = new AvatarParser(this.svgContainer);
 
+    // Initialize physics engine
+    this.physicsEngine = new PhysicsEngine(this.svgContainer);
+    this.physicsEngine.enable();
+
     // Try to load saved session first, otherwise load default
     const savedSession = this.persistence.loadSession();
     if (savedSession) {
@@ -63,6 +72,9 @@ class GeometricAvatarApp {
 
     // Set up event listeners
     this.setupEventListeners();
+
+    // Render character selector
+    this.renderCharacterSelector();
 
     // Set up state change listener
     this.stateManager.onStateChange(state => {
@@ -104,7 +116,7 @@ class GeometricAvatarApp {
     this.stateManager.setMood(session.mood);
     
     // Store as original character for mood modifiers
-    this.originalCharacter = JSON.parse(JSON.stringify(session.character));
+    this.originalCharacter = structuredClone(session.character);
 
     // Update mood button styling
     document.querySelectorAll('.mood-btn').forEach(btn => {
@@ -131,7 +143,7 @@ class GeometricAvatarApp {
       this.stateManager.setCharacter(characterData as CharacterSchema);
       
       // Store original character for mood modifiers
-      this.originalCharacter = JSON.parse(JSON.stringify(characterData));
+      this.originalCharacter = structuredClone(characterData);
     } catch (error) {
       console.error('Failed to load default character:', error);
     }
@@ -156,6 +168,60 @@ class GeometricAvatarApp {
       }
     } catch (error) {
       console.error('Failed to load default animations:', error);
+    }
+  }
+
+  private renderCharacterSelector(): void {
+    const selector = document.getElementById('character-selector');
+    if (!selector) return;
+
+    const presets = this.characterGallery.getPresets();
+    presets.forEach(preset => {
+      const button = document.createElement('button');
+      button.className = 'character-btn';
+      button.dataset.presetId = preset.id;
+      button.textContent = preset.name;
+      button.title = preset.description;
+      
+      if (preset.id === 'default-avatar') {
+        button.classList.add('active');
+      }
+      
+      button.addEventListener('click', () => {
+        this.handleCharacterPresetChange(preset.id);
+      });
+      
+      selector.appendChild(button);
+    });
+  }
+
+  private async handleCharacterPresetChange(presetId: string): Promise<void> {
+    try {
+      const characterData = await this.characterGallery.loadPreset(presetId);
+      
+      if (!characterData) {
+        console.error('Preset not found:', presetId);
+        return;
+      }
+
+      const validation = this.validator.validateCharacterSchema(characterData);
+      if (!validation.valid) {
+        console.error('Invalid character schema:', validation.errors);
+        return;
+      }
+
+      const character = characterData as CharacterSchema;
+      this.stateManager.setCharacter(character);
+      this.originalCharacter = structuredClone(character);
+      
+      this.applyMoodModifiers(this.stateManager.getMood());
+
+      document.querySelectorAll('.character-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-preset-id="${presetId}"]`)?.classList.add('active');
+    } catch (error) {
+      console.error('Failed to load preset:', error);
     }
   }
 
@@ -237,6 +303,22 @@ class GeometricAvatarApp {
     if (clearSavedBtn) {
       clearSavedBtn.addEventListener('click', () => this.handleClearSaved());
     }
+
+    // Physics toggle button
+    const togglePhysicsBtn = document.getElementById('toggle-physics-btn');
+    if (togglePhysicsBtn) {
+      togglePhysicsBtn.addEventListener('click', () => {
+        if (this.physicsEngine) {
+          if (this.physicsEngine.isEnabled) {
+            this.physicsEngine.disable();
+            togglePhysicsBtn.textContent = '🖐️ Enable Drag';
+          } else {
+            this.physicsEngine.enable();
+            togglePhysicsBtn.textContent = '🖐️ Disable Drag';
+          }
+        }
+      });
+    }
   }
 
   private handleMessage(message: string): void {
@@ -310,7 +392,7 @@ class GeometricAvatarApp {
     if (!this.originalCharacter || !this.parser) return;
 
     // Create a fresh copy from original character
-    const character: CharacterSchema = JSON.parse(JSON.stringify(this.originalCharacter));
+    const character: CharacterSchema = structuredClone(this.originalCharacter);
     const modifiers = this.personalityMapper.getGeometricModifiers(mood);
 
     // Apply modifiers to character elements
@@ -402,7 +484,7 @@ class GeometricAvatarApp {
       // Apply the character
       const character = parsed as CharacterSchema;
       this.stateManager.setCharacter(character);
-      this.originalCharacter = JSON.parse(JSON.stringify(character));
+      this.originalCharacter = structuredClone(character);
       
       // Re-apply mood modifiers
       this.applyMoodModifiers(this.stateManager.getMood());
@@ -425,7 +507,7 @@ class GeometricAvatarApp {
       }
 
       this.stateManager.setCharacter(characterData as CharacterSchema);
-      this.originalCharacter = JSON.parse(JSON.stringify(characterData));
+      this.originalCharacter = structuredClone(characterData);
       
       // Reset mood to neutral
       this.stateManager.setMood('neutral');
@@ -480,7 +562,7 @@ class GeometricAvatarApp {
 
     // Apply the character
     this.stateManager.setCharacter(result.character);
-    this.originalCharacter = JSON.parse(JSON.stringify(result.character));
+    this.originalCharacter = structuredClone(result.character);
     
     // Re-apply mood modifiers
     this.applyMoodModifiers(this.stateManager.getMood());
@@ -538,7 +620,7 @@ class GeometricAvatarApp {
 
         const character = parsed as CharacterSchema;
         this.stateManager.setCharacter(character);
-        this.originalCharacter = JSON.parse(JSON.stringify(character));
+        this.originalCharacter = structuredClone(character);
         
         // Re-apply mood modifiers
         this.applyMoodModifiers(this.stateManager.getMood());

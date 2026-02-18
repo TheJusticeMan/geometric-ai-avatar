@@ -1,0 +1,105 @@
+{
+  "id": "trickster-avatar",
+  "version": "1.0",
+  "elements": [
+    {
+      "type": "circle",
+      "id": "head",
+      "z-index": 2,
+      "coordinates": {
+        "cx": 200,
+        "cy": 100,
+        "r": 30
+      },
+      "style": {
+        "fill": "#E74C3C",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "torso",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [175, 125],
+          [235, 135],
+          [245, 255],
+          [155, 245]
+        ]
+      },
+      "style": {
+        "fill": "#F39C12",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "circle",
+      "id": "eye-left",
+      "z-index": 3,
+      "coordinates": {
+        "cx": 190,
+        "cy": 95,
+        "r": 7
+      },
+      "style": {
+        "fill": "#2ECC71",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "circle",
+      "id": "eye-right",
+      "z-index": 3,
+      "coordinates": {
+        "cx": 210,
+        "cy": 95,
+        "r": 3
+      },
+      "style": {
+        "fill": "#2ECC71",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "arm-left",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [160, 140],
+          [150, 220],
+          [165, 220],
+          [170, 140]
+        ]
+      },
+      "style": {
+        "fill": "#34495E",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "arm-right",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [240, 140],
+          [250, 220],
+          [235, 220],
+          [230, 140]
+        ]
+      },
+      "style": {
+        "fill": "#34495E",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    }
+  ]
+}
