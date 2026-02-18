@@ -156,7 +156,7 @@ class GeometricAvatarApp {
     if (messageLength < SHORT_MESSAGE_THRESHOLD) {
       // Short messages: Quick blink acknowledgment (already triggered above)
       // No additional animation needed
-    } else if (messageLength >= SHORT_MESSAGE_THRESHOLD && messageLength <= MEDIUM_MESSAGE_THRESHOLD) {
+    } else if (messageLength <= MEDIUM_MESSAGE_THRESHOLD) {
       // Medium messages: Blink + brief processing animation
       setTimeout(() => {
         this.animationEngine.triggerAnimation('isProcessing');
@@ -164,8 +164,7 @@ class GeometricAvatarApp {
       
       // Auto-resolve after brief duration
       setTimeout(() => {
-        this.animationEngine.stopAll();
-        this.animationEngine.triggerAnimation('onLoad');
+        this.resetToIdleAnimations();
       }, MEDIUM_MESSAGE_PROCESSING_DURATION);
     } else {
       // Long messages (> 100 chars): Blink + extended processing animation
@@ -179,10 +178,14 @@ class GeometricAvatarApp {
         BASE_PROCESSING_DURATION + (messageLength - MEDIUM_MESSAGE_THRESHOLD) * DURATION_PER_CHAR
       );
       setTimeout(() => {
-        this.animationEngine.stopAll();
-        this.animationEngine.triggerAnimation('onLoad');
+        this.resetToIdleAnimations();
       }, processingDuration);
     }
+  }
+
+  private resetToIdleAnimations(): void {
+    this.animationEngine.stopAll();
+    this.animationEngine.triggerAnimation('onLoad');
   }
 
   private handleMoodChange(mood: MoodState): void {

@@ -151,10 +151,53 @@ export class AnimationEngine {
         duration: this.parseOffset(kf.offset)
       }));
     } else if (schema.property === 'transform') {
-      animeParams.rotate = schema.timeline.map(kf => ({
-        value: kf.value,
-        duration: this.parseOffset(kf.offset)
-      }));
+      // Parse transform values to determine type
+      const firstValue = schema.timeline[0]?.value;
+      if (typeof firstValue === 'string') {
+        if (firstValue.includes('translateY')) {
+          // Extract translateY values
+          animeParams.translateY = schema.timeline.map(kf => {
+            const match = String(kf.value).match(/translateY\(([-\d.]+)\)/);
+            return {
+              value: match ? parseFloat(match[1]) : 0,
+              duration: this.parseOffset(kf.offset)
+            };
+          });
+        } else if (firstValue.includes('translateX')) {
+          // Extract translateX values
+          animeParams.translateX = schema.timeline.map(kf => {
+            const match = String(kf.value).match(/translateX\(([-\d.]+)\)/);
+            return {
+              value: match ? parseFloat(match[1]) : 0,
+              duration: this.parseOffset(kf.offset)
+            };
+          });
+        } else if (firstValue.includes('scale')) {
+          // Extract scale values
+          animeParams.scale = schema.timeline.map(kf => {
+            const match = String(kf.value).match(/scale\(([-\d.]+)\)/);
+            return {
+              value: match ? parseFloat(match[1]) : 1,
+              duration: this.parseOffset(kf.offset)
+            };
+          });
+        } else if (firstValue.includes('rotate')) {
+          // Extract rotate values
+          animeParams.rotate = schema.timeline.map(kf => {
+            const match = String(kf.value).match(/rotate\(([-\d.]+)\)/);
+            return {
+              value: match ? parseFloat(match[1]) : 0,
+              duration: this.parseOffset(kf.offset)
+            };
+          });
+        }
+      } else {
+        // Assume rotate for numeric values
+        animeParams.rotate = schema.timeline.map(kf => ({
+          value: kf.value,
+          duration: this.parseOffset(kf.offset)
+        }));
+      }
     } else if (schema.property === 'color') {
       animeParams.fill = schema.timeline.map(kf => ({
         value: kf.value,
