@@ -1,0 +1,178 @@
+import { AvatarParser } from './AvatarParser';
+import { AnimationEngine } from './AnimationEngine';
+import { StateManager } from './StateManager';
+import { PersonalityMapper } from './PersonalityMapper';
+import { Mirror } from './Mirror';
+import { SchemaValidator } from './SchemaValidator';
+import type { CharacterSchema, MoodState } from './types';
+
+class GeometricAvatarApp {
+  private parser: AvatarParser | null = null;
+  private animationEngine: AnimationEngine;
+  private stateManager: StateManager;
+  private personalityMapper: PersonalityMapper;
+  private mirror: Mirror;
+  private validator: SchemaValidator;
+  private svgContainer: SVGSVGElement | null = null;
+
+  constructor() {
+    this.animationEngine = new AnimationEngine();
+    this.stateManager = new StateManager();
+    this.personalityMapper = new PersonalityMapper();
+    this.mirror = new Mirror();
+    this.validator = new SchemaValidator();
+  }
+
+  async initialize(): Promise<void> {
+    // Get SVG container
+    const svgElement = document.getElementById('avatar-svg');
+    if (!svgElement || !(svgElement instanceof SVGSVGElement)) {
+      console.error('SVG container not found or invalid');
+      return;
+    }
+    this.svgContainer = svgElement;
+
+    // Initialize parser
+    this.parser = new AvatarParser(this.svgContainer);
+
+    // Load default character
+    await this.loadDefaultCharacter();
+
+    // Set up event listeners
+    this.setupEventListeners();
+
+    // Set up state change listener
+    this.stateManager.onStateChange(state => {
+      this.updateMirror();
+      
+      // Update character rendering when state changes
+      if (state.activeCharacter && this.parser) {
+        this.parser.render(state.activeCharacter);
+      }
+    });
+
+    // Start idle animations
+    this.animationEngine.triggerAnimation('onLoad');
+
+    // Initial mirror update
+    this.updateMirror();
+  }
+
+  private async loadDefaultCharacter(): Promise<void> {
+    try {
+      const response = await fetch('/data/characters/default.json');
+      const characterData = await response.json();
+
+      // Validate the character schema
+      const validation = this.validator.validateCharacterSchema(characterData);
+      if (!validation.valid) {
+        console.error('Invalid character schema:', validation.errors);
+        return;
+      }
+
+      // Set the character
+      this.stateManager.setCharacter(characterData as CharacterSchema);
+
+      // Render the character
+      if (this.parser) {
+        this.parser.render(characterData as CharacterSchema);
+      }
+    } catch (error) {
+      console.error('Failed to load default character:', error);
+    }
+  }
+
+  private setupEventListeners(): void {
+    // Mood selector buttons
+    const moodButtons = document.querySelectorAll<HTMLButtonElement>('.mood-btn');
+    moodButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const mood = button.dataset.mood as MoodState;
+        this.handleMoodChange(mood);
+      });
+    });
+
+    // Text input for message received trigger
+    const textInput = document.getElementById('message-input') as HTMLInputElement;
+    const sendButton = document.getElementById('send-btn') as HTMLButtonElement;
+
+    if (textInput && sendButton) {
+      const handleMessage = (): void => {
+        const message = textInput.value.trim();
+        if (message) {
+          this.animationEngine.triggerAnimation('onMessageReceived');
+          textInput.value = '';
+        }
+      };
+
+      sendButton.addEventListener('click', handleMessage);
+      textInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          handleMessage();
+        }
+      });
+    }
+  }
+
+  private handleMoodChange(mood: MoodState): void {
+    this.stateManager.setMood(mood);
+    
+    // Stop current animations
+    this.animationEngine.stopAll();
+    
+    // Apply geometric modifiers to character
+    this.applyMoodModifiers(mood);
+
+    // Trigger mood-specific animations
+    this.animationEngine.triggerAnimation('onMoodChange');
+    
+    // Restart idle animations with mood-specific parameters
+    this.animationEngine.triggerAnimation('onLoad');
+
+    // Update active mood button styling
+    document.querySelectorAll('.mood-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`[data-mood="${mood}"]`)?.classList.add('active');
+  }
+
+  private applyMoodModifiers(mood: MoodState): void {
+    const character = this.stateManager.getCharacter();
+    if (!character || !this.parser) return;
+
+    const modifiers = this.personalityMapper.getGeometricModifiers(mood);
+
+    // Apply modifiers to character elements
+    character.elements.forEach(element => {
+      if (element.id.includes('eye') && element.type === 'circle' && modifiers.eyeRadiusMultiplier) {
+        const originalRadius = 5; // Default eye radius
+        element.coordinates.r = originalRadius * modifiers.eyeRadiusMultiplier;
+        this.parser?.updateElement(element.id, element);
+      }
+    });
+
+    // Re-render with modified character
+    this.parser.render(character);
+  }
+
+  private updateMirror(): void {
+    const mirrorOutput = document.getElementById('mirror-output');
+    if (!mirrorOutput || !this.svgContainer) return;
+
+    const description = this.mirror.describeCurrentState(
+      this.stateManager.getCharacter(),
+      this.stateManager.getMood(),
+      this.svgContainer
+    );
+
+    mirrorOutput.textContent = description;
+  }
+}
+
+// Initialize the application when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const app = new GeometricAvatarApp();
+  app.initialize().catch(error => {
+    console.error('Failed to initialize application:', error);
+  });
+});
