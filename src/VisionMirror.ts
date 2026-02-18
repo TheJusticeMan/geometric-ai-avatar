@@ -59,8 +59,8 @@ export class VisionMirror {
         img.onload = () => {
           // Create canvas
           const canvas = document.createElement('canvas');
-          canvas.width = svgContainer.viewBox.baseVal.width || 400;
-          canvas.height = svgContainer.viewBox.baseVal.height || 400;
+          canvas.width = svgContainer.viewBox?.baseVal?.width || 400;
+          canvas.height = svgContainer.viewBox?.baseVal?.height || 400;
 
           const ctx = canvas.getContext('2d');
           if (!ctx) {

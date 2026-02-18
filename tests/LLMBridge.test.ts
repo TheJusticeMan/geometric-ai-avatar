@@ -1,9 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { LLMBridge } from '../src/LLMBridge';
+import { ProviderRegistry } from '../src/llm/ProviderRegistry';
+import { OpenAIAdapter } from '../src/llm/OpenAIAdapter';
 import type { CharacterSchema } from '../src/types';
+import type { LLMMessage } from '../src/llm/LLMProviderAdapter';
 
 describe('LLMBridge', () => {
-  const bridge = new LLMBridge();
+  let bridge: LLMBridge;
+
+  beforeEach(() => {
+    bridge = new LLMBridge();
+    vi.clearAllMocks();
+  });
 
   describe('parseResponse', () => {
     it('should parse valid JSON from markdown code fence', () => {
@@ -102,6 +110,164 @@ I made the head red!`;
       expect(prompt).toContain(userMessage);
       expect(prompt).toContain(mirrorOutput);
       expect(prompt).toContain('```json');
+    });
+  });
+
+  describe('setProviderRegistry', () => {
+    it('should set the provider registry', () => {
+      const registry = new ProviderRegistry();
+      expect(() => bridge.setProviderRegistry(registry)).not.toThrow();
+    });
+  });
+
+  describe('sendToLLM', () => {
+    it('should send messages to LLM via provider', async () => {
+      const registry = new ProviderRegistry();
+      const mockAdapter = new OpenAIAdapter('test-key');
+      mockAdapter.sendMessage = vi.fn().mockResolvedValue({
+        content: 'Response from LLM',
+        model: 'gpt-4o-mini',
+      });
+
+      registry.register('openai', mockAdapter);
+      bridge.setProviderRegistry(registry);
+
+      const messages: LLMMessage[] = [{ role: 'user', content: 'Hello' }];
+      const response = await bridge.sendToLLM(messages, 'openai');
+
+      expect(response.content).toBe('Response from LLM');
+      expect(mockAdapter.sendMessage).toHaveBeenCalled();
+    });
+
+    it('should throw error if registry not set', async () => {
+      const messages: LLMMessage[] = [{ role: 'user', content: 'Hello' }];
+
+      await expect(bridge.sendToLLM(messages, 'openai')).rejects.toThrow(
+        'Provider registry not set'
+      );
+    });
+
+    it('should throw error if provider not found', async () => {
+      const registry = new ProviderRegistry();
+      bridge.setProviderRegistry(registry);
+
+      const messages: LLMMessage[] = [{ role: 'user', content: 'Hello' }];
+
+      await expect(bridge.sendToLLM(messages, 'nonexistent')).rejects.toThrow(
+        'Provider nonexistent not found'
+      );
+    });
+
+    it('should add messages to conversation history', async () => {
+      const registry = new ProviderRegistry();
+      const mockAdapter = new OpenAIAdapter('test-key');
+      mockAdapter.sendMessage = vi.fn().mockResolvedValue({
+        content: 'Response',
+        model: 'gpt-4o-mini',
+      });
+
+      registry.register('openai', mockAdapter);
+      bridge.setProviderRegistry(registry);
+
+      const messages: LLMMessage[] = [{ role: 'user', content: 'Hello' }];
+      await bridge.sendToLLM(messages, 'openai');
+
+      const history = bridge.getConversationHistory();
+      expect(history.length).toBeGreaterThan(0);
+      expect(history.some(m => m.content === 'Hello')).toBe(true);
+      expect(history.some(m => m.content === 'Response')).toBe(true);
+    });
+  });
+
+  describe('modifyCharacterViaLLM', () => {
+    it('should modify character using LLM', async () => {
+      const registry = new ProviderRegistry();
+      const mockAdapter = new OpenAIAdapter('test-key');
+      mockAdapter.sendMessage = vi.fn().mockResolvedValue({
+        content: `\`\`\`json
+{
+  "id": "test-avatar",
+  "version": "1.0",
+  "elements": [
+    {
+      "type": "circle",
+      "id": "head",
+      "z-index": 1,
+      "coordinates": { "cx": 200, "cy": 200, "r": 60 },
+      "style": { "fill": "#FF0000", "stroke": "#000000", "opacity": 1 }
+    }
+  ]
+}
+\`\`\``,
+        model: 'gpt-4o-mini',
+      });
+
+      registry.register('openai', mockAdapter);
+      bridge.setProviderRegistry(registry);
+
+      const character: CharacterSchema = {
+        id: 'test-avatar',
+        version: '1.0',
+        elements: [],
+      };
+
+      const result = await bridge.modifyCharacterViaLLM(
+        character,
+        'Make the head bigger',
+        'openai',
+        'Current state'
+      );
+
+      expect(result.character).not.toBeNull();
+      expect(result.character?.elements).toHaveLength(1);
+      expect(result.message).toContain('successfully');
+    });
+
+    it('should handle LLM errors', async () => {
+      const registry = new ProviderRegistry();
+      const mockAdapter = new OpenAIAdapter('test-key');
+      mockAdapter.sendMessage = vi.fn().mockRejectedValue(new Error('API error'));
+
+      registry.register('openai', mockAdapter);
+      bridge.setProviderRegistry(registry);
+
+      const character: CharacterSchema = {
+        id: 'test-avatar',
+        version: '1.0',
+        elements: [],
+      };
+
+      const result = await bridge.modifyCharacterViaLLM(
+        character,
+        'Make changes',
+        'openai',
+        'State'
+      );
+
+      expect(result.character).toBeNull();
+      expect(result.message).toContain('LLM request failed');
+    });
+  });
+
+  describe('conversation history', () => {
+    it('should get and clear conversation history', async () => {
+      const registry = new ProviderRegistry();
+      const mockAdapter = new OpenAIAdapter('test-key');
+      mockAdapter.sendMessage = vi.fn().mockResolvedValue({
+        content: 'Response',
+        model: 'gpt-4o-mini',
+      });
+
+      registry.register('openai', mockAdapter);
+      bridge.setProviderRegistry(registry);
+
+      const messages: LLMMessage[] = [{ role: 'user', content: 'Hello' }];
+      await bridge.sendToLLM(messages, 'openai');
+
+      expect(bridge.getConversationHistory().length).toBeGreaterThan(0);
+
+      bridge.clearHistory();
+      expect(bridge.getConversationHistory()).toHaveLength(0);
     });
   });
 });
