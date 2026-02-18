@@ -6,6 +6,17 @@ import { Mirror } from './Mirror';
 import { SchemaValidator } from './SchemaValidator';
 import type { CharacterSchema, MoodState } from './types';
 
+// Animation timing constants
+const BLINK_TO_PROCESSING_DELAY = 300;
+const MEDIUM_MESSAGE_PROCESSING_DURATION = 2000;
+const BASE_PROCESSING_DURATION = 2000;
+const MAX_PROCESSING_DURATION = 5000;
+const DURATION_PER_CHAR = 10;
+
+// Message length thresholds
+const SHORT_MESSAGE_THRESHOLD = 20;
+const MEDIUM_MESSAGE_THRESHOLD = 100;
+
 class GeometricAvatarApp {
   private parser: AvatarParser | null = null;
   private animationEngine: AnimationEngine;
@@ -52,8 +63,8 @@ class GeometricAvatarApp {
       }
     });
 
-    // Start idle animations
-    this.animationEngine.triggerAnimation('onLoad');
+    // Load and start default animations
+    await this.loadDefaultAnimations();
 
     // Initial mirror update
     this.updateMirror();
@@ -71,18 +82,35 @@ class GeometricAvatarApp {
         return;
       }
 
-      // Set the character
+      // Set the character (this triggers render via state change listener)
       this.stateManager.setCharacter(characterData as CharacterSchema);
       
       // Store original character for mood modifiers
       this.originalCharacter = JSON.parse(JSON.stringify(characterData));
-
-      // Render the character
-      if (this.parser) {
-        this.parser.render(characterData as CharacterSchema);
-      }
     } catch (error) {
       console.error('Failed to load default character:', error);
+    }
+  }
+
+  private async loadDefaultAnimations(): Promise<void> {
+    try {
+      const response = await fetch('/data/animations/idle.json');
+      const animationsData = await response.json();
+
+      // Validate and play each animation
+      if (Array.isArray(animationsData)) {
+        animationsData.forEach(animationSchema => {
+          // Validate animation schema
+          const validation = this.validator.validateAnimationSchema(animationSchema);
+          if (validation.valid) {
+            this.animationEngine.playAnimation(animationSchema);
+          } else {
+            console.error('Invalid animation schema:', validation.errors);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load default animations:', error);
     }
   }
 
@@ -104,7 +132,7 @@ class GeometricAvatarApp {
       const handleMessage = (): void => {
         const message = textInput.value.trim();
         if (message) {
-          this.animationEngine.triggerAnimation('onMessageReceived');
+          this.handleMessage(message);
           textInput.value = '';
         }
       };
@@ -118,6 +146,51 @@ class GeometricAvatarApp {
     }
   }
 
+  private handleMessage(message: string): void {
+    const messageLength = message.length;
+
+    // Quick blink acknowledgment for all messages
+    this.animationEngine.triggerAnimation('onMessageReceived');
+
+    // Graduated animation responses based on message length
+    if (messageLength < SHORT_MESSAGE_THRESHOLD) {
+      // Short messages: Quick blink acknowledgment (already triggered above)
+      // No additional animation needed
+    } else if (messageLength <= MEDIUM_MESSAGE_THRESHOLD) {
+      // Medium messages: Blink + brief processing animation
+      setTimeout(() => {
+        this.animationEngine.triggerAnimation('isProcessing');
+      }, BLINK_TO_PROCESSING_DELAY);
+      
+      // Auto-resolve after brief duration
+      setTimeout(() => {
+        this.resetToIdleAnimations();
+      }, MEDIUM_MESSAGE_PROCESSING_DURATION);
+    } else {
+      // Long messages (> 100 chars): Blink + extended processing animation
+      setTimeout(() => {
+        this.animationEngine.triggerAnimation('isProcessing');
+      }, BLINK_TO_PROCESSING_DELAY);
+      
+      // Auto-resolve after duration proportional to message length
+      // Formula: base 2s + 10ms per char beyond 100 chars, capped at 5s
+      const processingDuration = Math.min(
+        MAX_PROCESSING_DURATION,
+        BASE_PROCESSING_DURATION + (messageLength - MEDIUM_MESSAGE_THRESHOLD) * DURATION_PER_CHAR
+      );
+      setTimeout(() => {
+        this.resetToIdleAnimations();
+      }, processingDuration);
+    }
+  }
+
+  private resetToIdleAnimations(): void {
+    this.animationEngine.stopAll();
+    // onLoad trigger starts the default idle animations (float and breathe)
+    // Note: blink animations are loaded separately from idle.json
+    this.animationEngine.triggerAnimation('onLoad');
+  }
+
   private handleMoodChange(mood: MoodState): void {
     this.stateManager.setMood(mood);
     
@@ -128,7 +201,7 @@ class GeometricAvatarApp {
     this.applyMoodModifiers(mood);
 
     // Trigger mood-specific animations
-    this.animationEngine.triggerAnimation('onMoodChange');
+    this.animationEngine.triggerMoodAnimation(mood);
     
     // Restart idle animations with mood-specific parameters
     this.animationEngine.triggerAnimation('onLoad');
@@ -154,11 +227,8 @@ class GeometricAvatarApp {
       }
     });
 
-    // Update state with modified character
+    // Update state with modified character (this triggers render via state change listener)
     this.stateManager.setCharacter(character);
-
-    // Re-render with modified character
-    this.parser.render(character);
   }
 
   private updateMirror(): void {

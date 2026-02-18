@@ -1,5 +1,5 @@
 import { animate, type AnimationParams } from 'animejs';
-import type { AnimationSchema, AnimationTrigger } from './types';
+import type { AnimationSchema, AnimationTrigger, MoodState } from './types';
 
 export interface AnimationPreset {
   name: string;
@@ -69,6 +69,45 @@ export class AnimationEngine {
         loop: true
       }
     });
+
+    // Pulse animation - high-frequency scale oscillation (energetic mood)
+    this.presets.set('pulse', {
+      name: 'pulse',
+      targetIds: ['arm-left', 'arm-right'],
+      animation: {
+        scale: [1, 1.15],
+        easing: 'easeInOutQuad',
+        duration: 500,
+        loop: true,
+        direction: 'alternate'
+      }
+    });
+
+    // Tilt animation - slow head side-to-side movement (pensive mood)
+    this.presets.set('tilt', {
+      name: 'tilt',
+      targetIds: ['head'],
+      animation: {
+        translateX: [-10, 10],
+        easing: 'easeInOutSine',
+        duration: 3000,
+        loop: true,
+        direction: 'alternate'
+      }
+    });
+
+    // Jitter animation - rapid small position resets (erroneous mood)
+    this.presets.set('jitter', {
+      name: 'jitter',
+      targetIds: ['torso'],
+      animation: {
+        translateX: [-3, 3, -2, 2, -1, 1, 0],
+        translateY: [-2, 2, -3, 3, -1, 1, 0],
+        easing: 'linear',
+        duration: 200,
+        loop: true
+      }
+    });
   }
 
   playPreset(presetName: string): void {
@@ -112,10 +151,18 @@ export class AnimationEngine {
         duration: this.parseOffset(kf.offset)
       }));
     } else if (schema.property === 'transform') {
-      animeParams.rotate = schema.timeline.map(kf => ({
-        value: kf.value,
-        duration: this.parseOffset(kf.offset)
-      }));
+      // Parse transform values to determine type
+      const firstValue = schema.timeline[0]?.value;
+      if (typeof firstValue === 'string') {
+        const transformParams = this.parseTransformTimeline(schema);
+        Object.assign(animeParams, transformParams);
+      } else {
+        // Assume rotate for numeric values
+        animeParams.rotate = schema.timeline.map(kf => ({
+          value: kf.value,
+          duration: this.parseOffset(kf.offset)
+        }));
+      }
     } else if (schema.property === 'color') {
       animeParams.fill = schema.timeline.map(kf => ({
         value: kf.value,
@@ -125,6 +172,59 @@ export class AnimationEngine {
 
     const animation = animate(target, animeParams);
     this.activeAnimations.push(animation);
+  }
+
+  private parseTransformTimeline(schema: AnimationSchema): Partial<AnimationParams> {
+    const params: Partial<AnimationParams> = {};
+    const firstValue = String(schema.timeline[0]?.value);
+
+    if (firstValue.includes('translateY')) {
+      params.translateY = schema.timeline.map(kf => {
+        const match = String(kf.value).match(/translateY\(([-\d.]+)\)/);
+        if (!match) {
+          console.warn(`Invalid translateY value: ${kf.value}`);
+        }
+        return {
+          value: match ? parseFloat(match[1]) : 0,
+          duration: this.parseOffset(kf.offset)
+        };
+      });
+    } else if (firstValue.includes('translateX')) {
+      params.translateX = schema.timeline.map(kf => {
+        const match = String(kf.value).match(/translateX\(([-\d.]+)\)/);
+        if (!match) {
+          console.warn(`Invalid translateX value: ${kf.value}`);
+        }
+        return {
+          value: match ? parseFloat(match[1]) : 0,
+          duration: this.parseOffset(kf.offset)
+        };
+      });
+    } else if (firstValue.includes('scale')) {
+      params.scale = schema.timeline.map(kf => {
+        const match = String(kf.value).match(/scale\(([-\d.]+)\)/);
+        if (!match) {
+          console.warn(`Invalid scale value: ${kf.value}`);
+        }
+        return {
+          value: match ? parseFloat(match[1]) : 1,
+          duration: this.parseOffset(kf.offset)
+        };
+      });
+    } else if (firstValue.includes('rotate')) {
+      params.rotate = schema.timeline.map(kf => {
+        const match = String(kf.value).match(/rotate\(([-\d.]+)\)/);
+        if (!match) {
+          console.warn(`Invalid rotate value: ${kf.value}`);
+        }
+        return {
+          value: match ? parseFloat(match[1]) : 0,
+          duration: this.parseOffset(kf.offset)
+        };
+      });
+    }
+
+    return params;
   }
 
   triggerAnimation(trigger: AnimationTrigger): void {
@@ -140,7 +240,33 @@ export class AnimationEngine {
         this.playPreset('ponder');
         break;
       case 'onMoodChange':
-        // Handled by PersonalityMapper
+        // Handled by triggerMoodAnimation
+        break;
+    }
+  }
+
+  triggerMoodAnimation(mood: MoodState): void {
+    // Play mood-specific animations
+    switch (mood) {
+      case 'analytical':
+        // Slow, 360-degree rotation of the torso
+        this.playPreset('ponder');
+        break;
+      case 'energetic':
+        // High-frequency pulse of secondary shapes
+        this.playPreset('pulse');
+        break;
+      case 'pensive':
+        // Slow easeInOutSine tilt of the head circle
+        this.playPreset('tilt');
+        break;
+      case 'erroneous':
+        // Rapid, non-easing position resets
+        this.playPreset('jitter');
+        break;
+      case 'neutral':
+      default:
+        // Standard float + breathe (handled by onLoad trigger)
         break;
     }
   }

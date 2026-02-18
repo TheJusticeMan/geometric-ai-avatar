@@ -3,6 +3,7 @@ import type { CharacterSchema, GeometricElement, CircleElement, PolygonElement }
 export class AvatarParser {
   private container: SVGSVGElement;
   private elementCache: Map<string, SVGElement>;
+  private rootGroup: SVGGElement | null = null;
 
   constructor(container: SVGSVGElement) {
     this.container = container;
@@ -14,8 +15,8 @@ export class AvatarParser {
     this.clear();
 
     // Create a root group for animations
-    const rootGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    rootGroup.setAttribute('id', 'avatar-root');
+    this.rootGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    this.rootGroup.setAttribute('id', 'avatar-root');
 
     // Sort elements by z-index
     const sortedElements = [...schema.elements].sort((a, b) => a['z-index'] - b['z-index']);
@@ -24,27 +25,27 @@ export class AvatarParser {
     sortedElements.forEach(element => {
       const svgElement = this.createElement(element);
       if (svgElement) {
-        rootGroup.appendChild(svgElement);
+        this.rootGroup!.appendChild(svgElement);
         this.elementCache.set(element.id, svgElement);
       }
     });
 
     // Add root group to container
-    this.container.appendChild(rootGroup);
+    this.container.appendChild(this.rootGroup);
   }
 
   updateElement(elementId: string, element: GeometricElement): void {
     const existingElement = this.elementCache.get(elementId);
     
-    if (existingElement) {
-      // Remove old element
-      this.container.removeChild(existingElement);
+    if (existingElement && this.rootGroup) {
+      // Remove old element from root group
+      this.rootGroup.removeChild(existingElement);
     }
 
-    // Create and add new element
+    // Create and add new element to root group
     const newElement = this.createElement(element);
-    if (newElement) {
-      this.container.appendChild(newElement);
+    if (newElement && this.rootGroup) {
+      this.rootGroup.appendChild(newElement);
       this.elementCache.set(elementId, newElement);
     }
   }
@@ -58,6 +59,7 @@ export class AvatarParser {
       this.container.removeChild(this.container.firstChild);
     }
     this.elementCache.clear();
+    this.rootGroup = null;
   }
 
   private createElement(element: GeometricElement): SVGElement | null {
