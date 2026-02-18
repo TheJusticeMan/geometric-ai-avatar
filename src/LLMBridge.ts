@@ -1,11 +1,27 @@
 import type { CharacterSchema, AnyCharacterSchema } from './types';
 import { SchemaValidator } from './SchemaValidator';
+import type { ProviderRegistry } from './llm/ProviderRegistry';
+import type {
+  LLMMessage,
+  LLMRequestOptions,
+  LLMResponse,
+  LLMStreamChunk,
+} from './llm/LLMProviderAdapter';
 
 export class LLMBridge {
   private validator: SchemaValidator;
+  private registry?: ProviderRegistry;
+  private conversationHistory: LLMMessage[] = [];
 
   constructor() {
     this.validator = new SchemaValidator();
+  }
+
+  /**
+   * Set the provider registry for direct API calls
+   */
+  setProviderRegistry(registry: ProviderRegistry): void {
+    this.registry = registry;
   }
 
   // Generate the system prompt that teaches the LLM about the avatar system
@@ -181,5 +197,127 @@ Please provide the complete modified character JSON wrapped in \`\`\`json code f
     }
     
     return `${systemPrompt}\n\n---\n\nPlease modify this avatar as requested by the user.`;
+  }
+
+  /**
+   * Send messages directly to an LLM via API
+   */
+  async sendToLLM(
+    messages: LLMMessage[],
+    providerName: string,
+    options?: LLMRequestOptions
+  ): Promise<LLMResponse> {
+    if (!this.registry) {
+      throw new Error('Provider registry not set. Call setProviderRegistry() first.');
+    }
+
+    const provider = this.registry.get(providerName);
+    if (!provider) {
+      throw new Error(`Provider ${providerName} not found in registry`);
+    }
+
+    const requestOptions: LLMRequestOptions = {
+      model: options?.model || provider.availableModels[0],
+      temperature: options?.temperature,
+      maxTokens: options?.maxTokens,
+      stream: false,
+    };
+
+    const response = await provider.sendMessage(messages, requestOptions);
+
+    // Store in conversation history
+    this.conversationHistory.push(...messages);
+    this.conversationHistory.push({
+      role: 'assistant',
+      content: response.content,
+    });
+
+    return response;
+  }
+
+  /**
+   * Send messages directly to an LLM via API with streaming
+   */
+  async *sendToLLMStream(
+    messages: LLMMessage[],
+    providerName: string,
+    options?: LLMRequestOptions
+  ): AsyncIterable<LLMStreamChunk> {
+    if (!this.registry) {
+      throw new Error('Provider registry not set. Call setProviderRegistry() first.');
+    }
+
+    const provider = this.registry.get(providerName);
+    if (!provider) {
+      throw new Error(`Provider ${providerName} not found in registry`);
+    }
+
+    if (!provider.supportsStreaming) {
+      throw new Error(`Provider ${providerName} does not support streaming`);
+    }
+
+    const requestOptions: LLMRequestOptions = {
+      model: options?.model || provider.availableModels[0],
+      temperature: options?.temperature,
+      maxTokens: options?.maxTokens,
+      stream: true,
+    };
+
+    let fullResponse = '';
+
+    for await (const chunk of provider.sendMessageStream(messages, requestOptions)) {
+      fullResponse += chunk.content;
+      yield chunk;
+    }
+
+    // Store in conversation history
+    this.conversationHistory.push(...messages);
+    this.conversationHistory.push({
+      role: 'assistant',
+      content: fullResponse,
+    });
+  }
+
+  /**
+   * High-level method to modify character via LLM
+   */
+  async modifyCharacterViaLLM(
+    character: AnyCharacterSchema,
+    instruction: string,
+    providerName: string,
+    mirrorOutput: string,
+    options?: LLMRequestOptions
+  ): Promise<{ character: AnyCharacterSchema | null; message: string }> {
+    const systemPrompt = this.generateSystemPrompt(mirrorOutput, character);
+    const userPrompt = this.generateUserPrompt(mirrorOutput, instruction);
+
+    const messages: LLMMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ];
+
+    try {
+      const response = await this.sendToLLM(messages, providerName, options);
+      return this.parseResponse(response.content);
+    } catch (error) {
+      return {
+        character: null,
+        message: `LLM request failed: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
+  }
+
+  /**
+   * Get conversation history
+   */
+  getConversationHistory(): LLMMessage[] {
+    return [...this.conversationHistory];
+  }
+
+  /**
+   * Clear conversation history
+   */
+  clearHistory(): void {
+    this.conversationHistory = [];
   }
 }
