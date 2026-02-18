@@ -22,8 +22,9 @@ export class AnimationEngine {
       targetIds: ['eye-left', 'eye-right'],
       animation: {
         r: [
-          { value: 0, duration: 100 },
-          { value: '*', duration: 100 }
+          { value: '5', duration: 100 },
+          { value: '0', duration: 100 },
+          { value: '5', duration: 100 }
         ],
         easing: 'easeInOutQuad',
         loop: true,
