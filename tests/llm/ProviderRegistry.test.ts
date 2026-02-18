@@ -118,6 +118,7 @@ describe('ProviderRegistry', () => {
       const adapter = ProviderRegistry.createAdapter(config);
       expect(adapter.name).toBe('google');
       expect(adapter.availableModels).toContain('gemini-1.5-flash');
+      expect(adapter.availableModels).toContain('gemini-2.0-flash');
     });
 
     it('should create Ollama adapter', () => {
