@@ -56,7 +56,7 @@ export class VisionMirror {
 
         // Create image element
         const img = new Image();
-        img.onload = () => {
+        img.onload = (): void => {
           // Create canvas
           const canvas = document.createElement('canvas');
           canvas.width = svgContainer.viewBox?.baseVal?.width || 400;
@@ -80,7 +80,7 @@ export class VisionMirror {
           resolve(dataUrl);
         };
 
-        img.onerror = () => {
+        img.onerror = (): void => {
           URL.revokeObjectURL(url);
           reject(new Error('Failed to load SVG as image'));
         };

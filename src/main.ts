@@ -8,7 +8,11 @@ import { PersistenceManager } from './PersistenceManager';
 import { LLMBridge } from './LLMBridge';
 import { PhysicsEngine } from './PhysicsEngine';
 import { CharacterGallery } from './CharacterGallery';
+import { ProviderRegistry } from './llm/ProviderRegistry';
+import { APIKeyManager } from './llm/APIKeyManager';
+import { VisionMirror } from './VisionMirror';
 import type { CharacterSchema, MoodState, AnyCharacterSchema, SessionData } from './types';
+import type { ProviderConfig } from './llm/LLMProviderAdapter';
 
 // Animation timing constants
 const BLINK_TO_PROCESSING_DELAY = 300;
@@ -32,8 +36,12 @@ class GeometricAvatarApp {
   private llmBridge: LLMBridge;
   private physicsEngine: PhysicsEngine | null = null;
   private characterGallery: CharacterGallery;
+  private providerRegistry: ProviderRegistry;
+  private apiKeyManager: APIKeyManager;
+  private visionMirror: VisionMirror;
   private svgContainer: SVGSVGElement | null = null;
   private originalCharacter: AnyCharacterSchema | null = null;
+  private currentProvider: string = '';
 
   constructor() {
     this.animationEngine = new AnimationEngine();
@@ -44,6 +52,12 @@ class GeometricAvatarApp {
     this.persistence = new PersistenceManager();
     this.llmBridge = new LLMBridge();
     this.characterGallery = new CharacterGallery();
+    this.providerRegistry = new ProviderRegistry();
+    this.apiKeyManager = new APIKeyManager();
+    this.visionMirror = new VisionMirror(this.mirror, this.providerRegistry);
+    
+    // Connect LLMBridge with ProviderRegistry
+    this.llmBridge.setProviderRegistry(this.providerRegistry);
   }
 
   async initialize(): Promise<void> {
@@ -279,6 +293,54 @@ class GeometricAvatarApp {
     
     if (applyLlmBtn) {
       applyLlmBtn.addEventListener('click', () => this.handleApplyLLMResponse());
+    }
+
+    // Provider selection and configuration
+    const providerSelect = document.getElementById('provider-select') as HTMLSelectElement;
+    const saveKeyBtn = document.getElementById('save-key-btn');
+    const testKeyBtn = document.getElementById('test-key-btn');
+
+    if (providerSelect) {
+      providerSelect.addEventListener('change', () => {
+        this.handleProviderChange(providerSelect.value);
+      });
+    }
+
+    if (saveKeyBtn) {
+      saveKeyBtn.addEventListener('click', () => this.handleSaveApiKey());
+    }
+
+    if (testKeyBtn) {
+      testKeyBtn.addEventListener('click', () => this.handleTestApiKey());
+    }
+
+    // Direct LLM chat
+    const sendLlmBtn = document.getElementById('send-llm-btn');
+    const sendLlmStreamBtn = document.getElementById('send-llm-stream-btn');
+
+    if (sendLlmBtn) {
+      sendLlmBtn.addEventListener('click', () => this.handleDirectLLMRequest(false));
+    }
+
+    if (sendLlmStreamBtn) {
+      sendLlmStreamBtn.addEventListener('click', () => this.handleDirectLLMRequest(true));
+    }
+
+    // Vision Mirror controls
+    const captureBtn = document.getElementById('capture-btn');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const refineBtn = document.getElementById('refine-btn');
+
+    if (captureBtn) {
+      captureBtn.addEventListener('click', () => this.handleCaptureScreenshot());
+    }
+
+    if (analyzeBtn) {
+      analyzeBtn.addEventListener('click', () => this.handleVisionAnalysis());
+    }
+
+    if (refineBtn) {
+      refineBtn.addEventListener('click', () => this.handleAutoRefine());
     }
 
     // Character Management controls
@@ -657,6 +719,374 @@ class GeometricAvatarApp {
     this.persistence.clearSaved();
     this.updateSessionIndicator(false);
     this.showSuccess('management-success', 'Saved session cleared!');
+  }
+
+  // ========== Provider Management ==========
+
+  private handleProviderChange(providerName: string): void {
+    this.currentProvider = providerName;
+    const providerConfig = document.getElementById('provider-config');
+    const baseUrlInput = document.getElementById('base-url-input') as HTMLInputElement;
+    const modelSelect = document.getElementById('model-select') as HTMLSelectElement;
+
+    if (!providerName) {
+      // Manual mode - hide config
+      if (providerConfig) providerConfig.style.display = 'none';
+      return;
+    }
+
+    // Show config panel
+    if (providerConfig) providerConfig.style.display = 'block';
+
+    // Show/hide base URL input for custom providers
+    if (baseUrlInput) {
+      baseUrlInput.style.display = providerName === 'generic' || providerName === 'ollama' ? 'block' : 'none';
+    }
+
+    // Load saved API key if exists
+    const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement;
+    if (apiKeyInput && providerName !== 'ollama') {
+      const savedKey = this.apiKeyManager.loadKey(providerName);
+      if (savedKey) {
+        apiKeyInput.value = savedKey;
+        apiKeyInput.placeholder = 'API Key (saved)';
+      } else {
+        apiKeyInput.value = '';
+        apiKeyInput.placeholder = 'API Key';
+      }
+    }
+
+    // Populate model select based on provider
+    if (modelSelect) {
+      this.populateModelSelect(providerName);
+    }
+  }
+
+  private populateModelSelect(providerName: string): void {
+    const modelSelect = document.getElementById('model-select') as HTMLSelectElement;
+    if (!modelSelect) return;
+
+    modelSelect.innerHTML = '';
+
+    const models: Record<string, string[]> = {
+      openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+      anthropic: ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022', 'claude-3-haiku-20240307'],
+      google: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-2.0-flash'],
+      ollama: ['llama2', 'mistral', 'llava'],
+      generic: ['default'],
+    };
+
+    const availableModels = models[providerName] || [];
+    availableModels.forEach(model => {
+      const option = document.createElement('option');
+      option.value = model;
+      option.textContent = model;
+      modelSelect.appendChild(option);
+    });
+  }
+
+  private handleSaveApiKey(): void {
+    if (!this.currentProvider || this.currentProvider === 'ollama') {
+      this.showStatus('key-status', 'No provider selected', 'error');
+      return;
+    }
+
+    const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement;
+    const baseUrlInput = document.getElementById('base-url-input') as HTMLInputElement;
+    const modelSelect = document.getElementById('model-select') as HTMLSelectElement;
+
+    const apiKey = apiKeyInput?.value.trim();
+    if (!apiKey) {
+      this.showStatus('key-status', 'API key is required', 'error');
+      return;
+    }
+
+    this.apiKeyManager.saveKey(this.currentProvider, apiKey);
+
+    // Create and register the provider adapter
+    try {
+      const config: ProviderConfig = {
+        provider: this.currentProvider as ProviderConfig['provider'],
+        apiKey,
+        baseUrl: baseUrlInput?.value.trim() || undefined,
+        defaultModel: modelSelect?.value || undefined,
+      };
+
+      const adapter = ProviderRegistry.createAdapter(config);
+      this.providerRegistry.register(this.currentProvider, adapter);
+
+      this.showStatus('key-status', '✅ API key saved successfully!', 'success');
+    } catch (error) {
+      this.showStatus('key-status', `Error: ${error instanceof Error ? error.message : String(error)}`, 'error');
+    }
+  }
+
+  private async handleTestApiKey(): Promise<void> {
+    if (!this.currentProvider) {
+      this.showStatus('key-status', 'No provider selected', 'error');
+      return;
+    }
+
+    const adapter = this.providerRegistry.get(this.currentProvider);
+    if (!adapter) {
+      this.showStatus('key-status', 'Provider not configured. Save API key first.', 'error');
+      return;
+    }
+
+    this.showStatus('key-status', '🧪 Testing connection...', 'info');
+
+    try {
+      const apiKey = this.apiKeyManager.loadKey(this.currentProvider) || '';
+      const isValid = await adapter.validateApiKey(apiKey);
+
+      if (isValid) {
+        this.showStatus('key-status', '✅ Connection successful!', 'success');
+      } else {
+        this.showStatus('key-status', '❌ Invalid API key or connection failed', 'error');
+      }
+    } catch (error) {
+      this.showStatus('key-status', `Error: ${error instanceof Error ? error.message : String(error)}`, 'error');
+    }
+  }
+
+  private async handleDirectLLMRequest(streaming: boolean): Promise<void> {
+    if (!this.currentProvider) {
+      this.showError('llm-error', 'Please select an LLM provider first');
+      return;
+    }
+
+    const adapter = this.providerRegistry.get(this.currentProvider);
+    if (!adapter) {
+      this.showError('llm-error', 'Provider not configured. Save API key first.');
+      return;
+    }
+
+    const instructionInput = document.getElementById('llm-instruction') as HTMLTextAreaElement;
+    const instruction = instructionInput?.value.trim();
+
+    if (!instruction) {
+      this.showError('llm-error', 'Please enter an instruction');
+      return;
+    }
+
+    const character = this.stateManager.getCharacter();
+    if (!character || !this.svgContainer) {
+      this.showError('llm-error', 'No character loaded');
+      return;
+    }
+
+    const responseDisplay = document.getElementById('llm-response-display');
+    if (responseDisplay) {
+      responseDisplay.style.display = 'block';
+      responseDisplay.textContent = streaming ? 'Streaming response...\n\n' : 'Requesting...';
+    }
+
+    try {
+      const mirrorOutput = this.mirror.generateLLMContext(character, this.stateManager.getMood(), this.svgContainer);
+
+      if (streaming && adapter.supportsStreaming) {
+        let fullResponse = '';
+        for await (const chunk of this.llmBridge.sendToLLMStream(
+          [
+            { role: 'system', content: this.llmBridge.generateSystemPrompt(mirrorOutput, character) },
+            { role: 'user', content: instruction },
+          ],
+          this.currentProvider
+        )) {
+          fullResponse += chunk.content;
+          if (responseDisplay) {
+            responseDisplay.textContent = fullResponse;
+          }
+        }
+        
+        // Parse and apply the response
+        const result = this.llmBridge.parseResponse(fullResponse);
+        if (result.character) {
+          this.stateManager.setCharacter(result.character);
+          this.showSuccess('llm-success', 'Character updated from LLM!');
+        }
+      } else {
+        const result = await this.llmBridge.modifyCharacterViaLLM(
+          character,
+          instruction,
+          this.currentProvider,
+          mirrorOutput
+        );
+
+        if (responseDisplay) {
+          responseDisplay.textContent = result.message;
+        }
+
+        if (result.character) {
+          this.stateManager.setCharacter(result.character);
+          this.showSuccess('llm-success', 'Character updated from LLM!');
+        } else {
+          this.showError('llm-error', result.message);
+        }
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.showError('llm-error', `LLM request failed: ${errorMsg}`);
+      if (responseDisplay) {
+        responseDisplay.textContent = `Error: ${errorMsg}`;
+      }
+    }
+  }
+
+  private async handleCaptureScreenshot(): Promise<void> {
+    if (!this.svgContainer) return;
+
+    try {
+      const screenshot = await this.visionMirror.captureScreenshot(this.svgContainer);
+      
+      // Download the screenshot
+      const link = document.createElement('a');
+      link.href = screenshot;
+      link.download = `avatar-${Date.now()}.png`;
+      link.click();
+
+      this.showVisionFeedback('Screenshot captured! Download started.');
+    } catch (error) {
+      this.showVisionFeedback(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private async handleVisionAnalysis(): Promise<void> {
+    if (!this.svgContainer || !this.currentProvider) {
+      this.showVisionFeedback('Error: Please select a vision-capable LLM provider first.');
+      return;
+    }
+
+    const adapter = this.providerRegistry.get(this.currentProvider);
+    if (!adapter || !adapter.supportsVision) {
+      this.showVisionFeedback(`Error: ${this.currentProvider} does not support vision analysis.`);
+      return;
+    }
+
+    this.showVisionFeedback('Analyzing avatar...');
+
+    try {
+      const feedback = await this.visionMirror.analyzeAvatar(this.svgContainer, this.currentProvider);
+      
+      let feedbackText = `=== Vision Analysis ===\n\n${feedback.description}\n\n`;
+      
+      if (feedback.qualityScore) {
+        feedbackText += `Quality Score: ${feedback.qualityScore}/10\n\n`;
+      }
+      
+      if (feedback.suggestions.length > 0) {
+        feedbackText += 'Suggestions:\n';
+        feedback.suggestions.forEach((s, i) => {
+          feedbackText += `${i + 1}. ${s}\n`;
+        });
+      }
+
+      this.showVisionFeedback(feedbackText);
+    } catch (error) {
+      this.showVisionFeedback(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private async handleAutoRefine(): Promise<void> {
+    if (!this.svgContainer || !this.currentProvider) {
+      this.showVisionFeedback('Error: Please select a vision-capable LLM provider first.');
+      return;
+    }
+
+    const character = this.stateManager.getCharacter();
+    if (!character) {
+      this.showVisionFeedback('Error: No character loaded.');
+      return;
+    }
+
+    const adapter = this.providerRegistry.get(this.currentProvider);
+    if (!adapter || !adapter.supportsVision) {
+      this.showVisionFeedback(`Error: ${this.currentProvider} does not support vision analysis.`);
+      return;
+    }
+
+    const progressDiv = document.getElementById('refinement-progress');
+    const progressBar = document.getElementById('refine-progress') as HTMLProgressElement;
+    const statusDiv = document.getElementById('refine-status');
+
+    if (progressDiv) progressDiv.style.display = 'block';
+    this.showVisionFeedback('Starting auto-refinement loop...');
+
+    try {
+      const result = await this.visionMirror.runRefinementLoop(
+        this.svgContainer,
+        character,
+        this.currentProvider,
+        { maxIterations: 3, targetQuality: 8 }
+      );
+
+      if (progressBar) progressBar.value = result.iterations.length;
+      if (statusDiv) statusDiv.textContent = `Completed ${result.iterations.length} iterations`;
+
+      // Apply the final refined character
+      this.stateManager.setCharacter(result.finalCharacter);
+
+      let feedbackText = `=== Auto-Refinement Complete ===\n\n`;
+      feedbackText += `Iterations: ${result.iterations.length}\n`;
+      feedbackText += `Converged: ${result.converged ? 'Yes' : 'No'}\n\n`;
+
+      result.iterations.forEach((iter, i) => {
+        feedbackText += `Iteration ${i + 1}:\n`;
+        feedbackText += `  Quality: ${iter.feedback.qualityScore || 'N/A'}/10\n`;
+        feedbackText += `  Feedback: ${iter.feedback.description.substring(0, 100)}...\n\n`;
+      });
+
+      this.showVisionFeedback(feedbackText);
+      this.showSuccess('llm-success', 'Avatar auto-refined!');
+    } catch (error) {
+      this.showVisionFeedback(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setTimeout(() => {
+        if (progressDiv) progressDiv.style.display = 'none';
+      }, 3000);
+    }
+  }
+
+  private showVisionFeedback(message: string): void {
+    const feedbackDiv = document.getElementById('vision-feedback');
+    if (feedbackDiv) {
+      feedbackDiv.style.display = 'block';
+      feedbackDiv.textContent = message;
+    }
+  }
+
+  private showStatus(elementId: string, message: string, type: 'success' | 'error' | 'info'): void {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    element.style.display = 'block';
+    element.textContent = message;
+
+    // Apply styling based on type
+    element.style.padding = '10px';
+    element.style.borderRadius = '8px';
+    element.style.marginTop = '10px';
+
+    if (type === 'success') {
+      element.style.background = 'rgba(46, 204, 113, 0.2)';
+      element.style.border = '1px solid rgba(46, 204, 113, 0.5)';
+      element.style.color = '#2ecc71';
+    } else if (type === 'error') {
+      element.style.background = 'rgba(231, 76, 60, 0.2)';
+      element.style.border = '1px solid rgba(231, 76, 60, 0.5)';
+      element.style.color = '#e74c3c';
+    } else {
+      element.style.background = 'rgba(52, 152, 219, 0.2)';
+      element.style.border = '1px solid rgba(52, 152, 219, 0.5)';
+      element.style.color = '#3498db';
+    }
+
+    // Auto-hide after 5 seconds for success messages
+    if (type === 'success' || type === 'info') {
+      setTimeout(() => {
+        element.style.display = 'none';
+      }, 5000);
+    }
   }
 }
 
