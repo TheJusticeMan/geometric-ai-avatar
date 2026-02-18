@@ -1,0 +1,105 @@
+{
+  "id": "default-avatar",
+  "version": "1.0",
+  "elements": [
+    {
+      "type": "circle",
+      "id": "head",
+      "z-index": 2,
+      "coordinates": {
+        "cx": 200,
+        "cy": 100,
+        "r": 30
+      },
+      "style": {
+        "fill": "#E0E0E0",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "circle",
+      "id": "eye-left",
+      "z-index": 3,
+      "coordinates": {
+        "cx": 190,
+        "cy": 95,
+        "r": 5
+      },
+      "style": {
+        "fill": "#1ABC9C",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "circle",
+      "id": "eye-right",
+      "z-index": 3,
+      "coordinates": {
+        "cx": 210,
+        "cy": 95,
+        "r": 5
+      },
+      "style": {
+        "fill": "#1ABC9C",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "torso",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [180, 140],
+          [220, 140],
+          [230, 200],
+          [170, 200]
+        ]
+      },
+      "style": {
+        "fill": "#2C3E50",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "arm-left",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [170, 150],
+          [160, 150],
+          [155, 185],
+          [165, 185]
+        ]
+      },
+      "style": {
+        "fill": "#2C3E50",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    },
+    {
+      "type": "polygon",
+      "id": "arm-right",
+      "z-index": 1,
+      "coordinates": {
+        "points": [
+          [230, 150],
+          [240, 150],
+          [245, 185],
+          [235, 185]
+        ]
+      },
+      "style": {
+        "fill": "#2C3E50",
+        "stroke": "#000000",
+        "opacity": 1
+      }
+    }
+  ]
+}
