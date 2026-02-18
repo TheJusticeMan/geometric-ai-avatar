@@ -55,7 +55,7 @@ geometric-ai-avatar/
 ├── package-lock.json         # Locked dependency versions
 ├── tsconfig.json             # TypeScript configuration
 ├── vite.config.ts            # Vite build configuration
-└── .eslintrc.json            # ESLint configuration
+└── eslint.config.js          # ESLint configuration (flat config)
 ```
 
 ## Defining Custom Characters

@@ -19,15 +19,15 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "ajv": "^8.12.0",
+    "ajv": "^8.18.0",
     "animejs": "^3.2.2"
   },
   "devDependencies": {
     "@types/animejs": "^3.1.13",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.12"
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
+    "eslint": "^9.18.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
   }
 }
