@@ -107,4 +107,57 @@ export class Mirror {
     const base64 = btoa(svgString);
     return `data:image/svg+xml;base64,${base64}`;
   }
+
+  // Generate LLM-optimized context for inclusion in prompts
+  generateLLMContext(
+    character: CharacterSchema | null,
+    mood: MoodState,
+    _svgContainer: SVGSVGElement
+  ): string {
+    if (!character) {
+      return 'No active character loaded.';
+    }
+
+    const context: string[] = [];
+
+    // Compact character JSON
+    context.push('Current Character (JSON):');
+    context.push(JSON.stringify(character, null, 2));
+    context.push('');
+
+    // Current mood state
+    context.push(`Mood: ${mood}`);
+    const modifiers = this.personalityMapper.getGeometricModifiers(mood);
+    if (Object.keys(modifiers).length > 0) {
+      context.push(`Active Modifiers: ${JSON.stringify(modifiers)}`);
+    }
+    context.push('');
+
+    // Semantic summary
+    context.push('Semantic Summary:');
+    const elementCount = character.elements.length;
+    const circleCount = character.elements.filter(el => el.type === 'circle').length;
+    const polygonCount = character.elements.filter(el => el.type === 'polygon').length;
+    
+    context.push(`Avatar with ${elementCount} elements (${circleCount} circles, ${polygonCount} polygons).`);
+    
+    const head = character.elements.find(el => el.id.includes('head'));
+    const eyes = character.elements.filter(el => el.id.includes('eye'));
+    const torso = character.elements.find(el => el.id.includes('torso'));
+    
+    if (head) context.push('Has head.');
+    if (eyes.length > 0) context.push(`Has ${eyes.length} eye(s).`);
+    if (torso) context.push('Has torso.');
+    context.push('');
+
+    // Available modification axes
+    context.push('Available Modifications:');
+    context.push('- Position: Adjust cx, cy coordinates');
+    context.push('- Size: Adjust r (circles) or points (polygons)');
+    context.push('- Colors: Change fill, stroke (hex format)');
+    context.push('- Opacity: Adjust opacity (0-1)');
+    context.push('- Z-Index: Reorder layers');
+
+    return context.join('\n');
+  }
 }

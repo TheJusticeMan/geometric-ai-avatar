@@ -44,6 +44,8 @@ geometric-ai-avatar/
 │   ├── StateManager.ts       # Reactive state management
 │   ├── PersonalityMapper.ts  # Mood to geometry mapping
 │   ├── Mirror.ts             # Self-reflection text generation
+│   ├── PersistenceManager.ts # localStorage save/load (Phase 3)
+│   ├── LLMBridge.ts          # LLM prompt generation (Phase 3)
 │   └── main.ts               # Application entry point
 ├── data/
 │   ├── characters/
@@ -57,6 +59,104 @@ geometric-ai-avatar/
 ├── vite.config.ts            # Vite build configuration
 └── eslint.config.js          # ESLint configuration (flat config)
 ```
+
+## Phase 3: The Reflective Loop (Self-Modification)
+
+Phase 3 introduces the self-reflective loop that allows the LLM to perceive, update, and evolve its avatar through a tight feedback cycle.
+
+### Features
+
+#### 1. Live JSON Editor
+- **Direct Character Editing**: Edit the character JSON directly in the browser
+- **Real-time Validation**: Schema validation with error messages
+- **Apply Changes**: Instantly apply JSON modifications to the avatar
+- **Reset**: Restore to the default character with one click
+
+#### 2. localStorage Persistence
+- **Session Auto-Save**: Character and mood state automatically persists to browser storage
+- **Session Restoration**: Automatically loads saved sessions on page reload
+- **Manual Save**: Explicitly save current state with "Save Session" button
+- **Clear Saved**: Reset to default by clearing saved session data
+- **Session Indicator**: Visual feedback showing whether you're using a saved or default session
+
+#### 3. LLM Integration Bridge
+- **System Prompt Generation**: Automatically generates comprehensive prompts for LLMs
+- **Copy to Clipboard**: One-click copy of full prompt including current avatar state
+- **Response Parsing**: Extracts and validates JSON from LLM responses (supports markdown code fences)
+- **Apply LLM Changes**: Parse and apply character modifications from ChatGPT, Claude, etc.
+- **Error Handling**: Clear feedback for invalid responses or parsing failures
+
+#### 4. Character Import/Export
+- **Export**: Download current character as timestamped JSON file
+- **Import**: Upload and validate custom character files
+- **Schema Validation**: Automatic validation on import with detailed error messages
+
+#### 5. Enhanced Mirror
+- **Human-Readable Output**: Detailed textual description of avatar state
+- **LLM-Optimized Context**: Compact, structured format for LLM prompts
+- **Semantic Interpretation**: High-level description of avatar appearance and mood
+
+### Using the Reflective Loop
+
+1. **Modify via JSON Editor**:
+   - Edit the JSON directly in the "JSON Editor" section
+   - Click "Apply JSON" to render changes
+   - Invalid JSON shows validation errors
+
+2. **Modify via LLM**:
+   - Click "📋 Copy LLM Prompt" to copy the system prompt
+   - Paste into ChatGPT/Claude with your modification request (e.g., "Make the eyes bigger")
+   - Copy the LLM's response
+   - Paste into "Paste LLM response here..." textarea
+   - Click "Apply LLM Response"
+
+3. **Save Your Work**:
+   - Changes auto-save on every modification
+   - Click "Save Session" to explicitly save
+   - Session persists across browser reloads
+   - Click "Clear Saved" to reset to default
+
+4. **Export/Import**:
+   - Click "💾 Export Character" to download as JSON
+   - Click "📂 Import Character" to upload a saved file
+   - Share character files with others
+
+### Example LLM Interaction
+
+```
+User: Make the avatar's eyes much larger and change the head to blue
+
+LLM Response:
+Here's the modified character with larger eyes and a blue head:
+
+```json
+{
+  "id": "default-avatar",
+  "version": "1.0",
+  "elements": [
+    {
+      "type": "circle",
+      "id": "head",
+      "z-index": 2,
+      "coordinates": { "cx": 200, "cy": 100, "r": 30 },
+      "style": { "fill": "#3498DB", "stroke": "#000000", "opacity": 1 }
+    },
+    {
+      "type": "circle",
+      "id": "eye-left",
+      "z-index": 3,
+      "coordinates": { "cx": 190, "cy": 95, "r": 10 },
+      "style": { "fill": "#1ABC9C", "stroke": "#000000", "opacity": 1 }
+    },
+    ...
+  ]
+}
+```
+
+I've increased the eye radius from 5 to 10 and changed the head fill color from #E0E0E0 to #3498DB (blue).
+```
+
+Simply paste this entire response into the application, and it will extract and apply the JSON automatically.
 
 ## Defining Custom Characters
 

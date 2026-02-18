@@ -79,3 +79,9 @@ export type AnimationTrigger = 'onLoad' | 'onMessageReceived' | 'isProcessing' |
 export interface StateChangeListener {
   (state: AvatarState): void;
 }
+
+export interface SessionData {
+  character: CharacterSchema;
+  mood: MoodState;
+  timestamp: number;
+}
