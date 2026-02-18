@@ -1,4 +1,4 @@
-import type { CharacterSchema } from './types';
+import type { CharacterSchema, AnyCharacterSchema } from './types';
 import { SchemaValidator } from './SchemaValidator';
 
 export class LLMBridge {
@@ -9,7 +9,7 @@ export class LLMBridge {
   }
 
   // Generate the system prompt that teaches the LLM about the avatar system
-  generateSystemPrompt(currentState: string, characterSchema: CharacterSchema): string {
+  generateSystemPrompt(currentState: string, characterSchema: AnyCharacterSchema): string {
     return `# Geometric AI Avatar System
 
 You are helping to modify a JSON-driven SVG avatar system. The avatar is composed entirely of geometric primitives: circles and polygons.
@@ -172,7 +172,7 @@ Please provide the complete modified character JSON wrapped in \`\`\`json code f
   }
 
   // Get the full system prompt as copyable text (for manual LLM use)
-  getFullPromptForCopy(mirrorOutput: string, character: CharacterSchema, userMessage: string = ''): string {
+  getFullPromptForCopy(mirrorOutput: string, character: AnyCharacterSchema, userMessage: string = ''): string {
     const systemPrompt = this.generateSystemPrompt(mirrorOutput, character);
     
     if (userMessage) {

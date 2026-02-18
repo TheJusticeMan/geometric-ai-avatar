@@ -56,7 +56,7 @@ export interface AnimationSchema {
 export type MoodState = 'neutral' | 'analytical' | 'energetic' | 'pensive' | 'erroneous';
 
 export interface AvatarState {
-  activeCharacter: CharacterSchema | null;
+  activeCharacter: AnyCharacterSchema | null;
   currentMood: MoodState;
 }
 
@@ -81,7 +81,7 @@ export interface StateChangeListener {
 }
 
 export interface SessionData {
-  character: CharacterSchema;
+  character: AnyCharacterSchema;
   mood: MoodState;
   timestamp: number;
 }

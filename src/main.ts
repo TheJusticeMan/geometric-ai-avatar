@@ -8,7 +8,7 @@ import { PersistenceManager } from './PersistenceManager';
 import { LLMBridge } from './LLMBridge';
 import { PhysicsEngine } from './PhysicsEngine';
 import { CharacterGallery } from './CharacterGallery';
-import type { CharacterSchema, MoodState } from './types';
+import type { CharacterSchema, MoodState, AnyCharacterSchema, SessionData } from './types';
 
 // Animation timing constants
 const BLINK_TO_PROCESSING_DELAY = 300;
@@ -33,7 +33,7 @@ class GeometricAvatarApp {
   private physicsEngine: PhysicsEngine | null = null;
   private characterGallery: CharacterGallery;
   private svgContainer: SVGSVGElement | null = null;
-  private originalCharacter: CharacterSchema | null = null;
+  private originalCharacter: AnyCharacterSchema | null = null;
 
   constructor() {
     this.animationEngine = new AnimationEngine();
@@ -102,7 +102,7 @@ class GeometricAvatarApp {
     this.updateSessionIndicator();
   }
 
-  private async loadSavedSession(session: { character: CharacterSchema; mood: MoodState; timestamp: number }): Promise<void> {
+  private async loadSavedSession(session: SessionData): Promise<void> {
     // Validate the saved character
     const validation = this.validator.validateCharacterSchema(session.character);
     if (!validation.valid) {
@@ -204,13 +204,14 @@ class GeometricAvatarApp {
         return;
       }
 
-      const validation = this.validator.validateCharacterSchema(characterData);
+      // Validate using validateAnyCharacter to support both v1.0 and v2.0
+      const validation = this.validator.validateAnyCharacter(characterData);
       if (!validation.valid) {
         console.error('Invalid character schema:', validation.errors);
         return;
       }
 
-      const character = characterData as CharacterSchema;
+      const character = characterData as AnyCharacterSchema;
       this.stateManager.setCharacter(character);
       this.originalCharacter = structuredClone(character);
       
@@ -392,15 +393,18 @@ class GeometricAvatarApp {
     if (!this.originalCharacter || !this.parser) return;
 
     // Create a fresh copy from original character
-    const character: CharacterSchema = structuredClone(this.originalCharacter);
+    const character = structuredClone(this.originalCharacter);
     const modifiers = this.personalityMapper.getGeometricModifiers(mood);
 
-    // Apply modifiers to character elements
-    character.elements.forEach(element => {
-      if (element.id.includes('eye') && element.type === 'circle' && modifiers.eyeRadiusMultiplier) {
-        element.coordinates.r = element.coordinates.r * modifiers.eyeRadiusMultiplier;
-      }
-    });
+    // Only apply modifiers to v1.0 geometric characters
+    if (character.version !== '2.0' && 'elements' in character) {
+      // Apply modifiers to character elements
+      character.elements.forEach(element => {
+        if (element.id.includes('eye') && element.type === 'circle' && modifiers.eyeRadiusMultiplier) {
+          element.coordinates.r = element.coordinates.r * modifiers.eyeRadiusMultiplier;
+        }
+      });
+    }
 
     // Update state with modified character (this triggers render via state change listener)
     this.stateManager.setCharacter(character);
