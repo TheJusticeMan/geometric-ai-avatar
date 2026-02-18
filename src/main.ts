@@ -52,8 +52,8 @@ class GeometricAvatarApp {
       }
     });
 
-    // Start idle animations
-    this.animationEngine.triggerAnimation('onLoad');
+    // Load and start default animations
+    await this.loadDefaultAnimations();
 
     // Initial mirror update
     this.updateMirror();
@@ -81,6 +81,28 @@ class GeometricAvatarApp {
     }
   }
 
+  private async loadDefaultAnimations(): Promise<void> {
+    try {
+      const response = await fetch('/data/animations/idle.json');
+      const animationsData = await response.json();
+
+      // Validate and play each animation
+      if (Array.isArray(animationsData)) {
+        animationsData.forEach(animationSchema => {
+          // Validate animation schema
+          const validation = this.validator.validateAnimationSchema(animationSchema);
+          if (validation.valid) {
+            this.animationEngine.playAnimation(animationSchema);
+          } else {
+            console.error('Invalid animation schema:', validation.errors);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load default animations:', error);
+    }
+  }
+
   private setupEventListeners(): void {
     // Mood selector buttons
     const moodButtons = document.querySelectorAll<HTMLButtonElement>('.mood-btn');
@@ -99,7 +121,7 @@ class GeometricAvatarApp {
       const handleMessage = (): void => {
         const message = textInput.value.trim();
         if (message) {
-          this.animationEngine.triggerAnimation('onMessageReceived');
+          this.handleMessage(message);
           textInput.value = '';
         }
       };
@@ -110,6 +132,42 @@ class GeometricAvatarApp {
           handleMessage();
         }
       });
+    }
+  }
+
+  private handleMessage(message: string): void {
+    const messageLength = message.length;
+
+    // Quick blink acknowledgment for all messages
+    this.animationEngine.triggerAnimation('onMessageReceived');
+
+    // Graduated animation responses based on message length
+    if (messageLength < 20) {
+      // Short messages: Quick blink acknowledgment (already triggered above)
+      // No additional animation needed
+    } else if (messageLength >= 20 && messageLength <= 100) {
+      // Medium messages: Blink + brief processing animation
+      setTimeout(() => {
+        this.animationEngine.triggerAnimation('isProcessing');
+      }, 300);
+      
+      // Auto-resolve after brief duration
+      setTimeout(() => {
+        this.animationEngine.stopAll();
+        this.animationEngine.triggerAnimation('onLoad');
+      }, 2000);
+    } else {
+      // Long messages (> 100 chars): Blink + extended processing animation
+      setTimeout(() => {
+        this.animationEngine.triggerAnimation('isProcessing');
+      }, 300);
+      
+      // Auto-resolve after duration proportional to message length
+      const processingDuration = Math.min(5000, 2000 + (messageLength - 100) * 10);
+      setTimeout(() => {
+        this.animationEngine.stopAll();
+        this.animationEngine.triggerAnimation('onLoad');
+      }, processingDuration);
     }
   }
 
