@@ -71,16 +71,11 @@ class GeometricAvatarApp {
         return;
       }
 
-      // Set the character
+      // Set the character (this triggers render via state change listener)
       this.stateManager.setCharacter(characterData as CharacterSchema);
       
       // Store original character for mood modifiers
       this.originalCharacter = JSON.parse(JSON.stringify(characterData));
-
-      // Render the character
-      if (this.parser) {
-        this.parser.render(characterData as CharacterSchema);
-      }
     } catch (error) {
       console.error('Failed to load default character:', error);
     }
@@ -154,11 +149,8 @@ class GeometricAvatarApp {
       }
     });
 
-    // Update state with modified character
+    // Update state with modified character (this triggers render via state change listener)
     this.stateManager.setCharacter(character);
-
-    // Re-render with modified character
-    this.parser.render(character);
   }
 
   private updateMirror(): void {
