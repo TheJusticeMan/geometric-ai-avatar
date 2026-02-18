@@ -1,14 +1,14 @@
-import anime from 'animejs';
+import { animate, type AnimationParams } from 'animejs';
 import type { AnimationSchema, AnimationTrigger } from './types';
 
 export interface AnimationPreset {
   name: string;
   targetIds: string[];
-  animation: Partial<anime.AnimeParams>;
+  animation: AnimationParams;
 }
 
 export class AnimationEngine {
-  private activeAnimations: anime.AnimeInstance[] = [];
+  private activeAnimations: ReturnType<typeof animate>[] = [];
   private presets: Map<string, AnimationPreset> = new Map();
 
   constructor() {
@@ -81,10 +81,7 @@ export class AnimationEngine {
     preset.targetIds.forEach(targetId => {
       const element = document.getElementById(targetId) || document.querySelector(targetId);
       if (element) {
-        const animation = anime({
-          targets: element,
-          ...preset.animation
-        });
+        const animation = animate(element, preset.animation);
         this.activeAnimations.push(animation);
       }
     });
@@ -97,11 +94,10 @@ export class AnimationEngine {
       return;
     }
 
-    const animeParams: anime.AnimeParams = {
-      targets: target,
+    const animeParams: AnimationParams = {
       easing: schema.easing,
       loop: schema.loop
-    };
+    } as AnimationParams;
 
     // Map property types to anime.js properties
     if (schema.property === 'radius') {
@@ -127,7 +123,7 @@ export class AnimationEngine {
       }));
     }
 
-    const animation = anime(animeParams);
+    const animation = animate(target, animeParams);
     this.activeAnimations.push(animation);
   }
 
