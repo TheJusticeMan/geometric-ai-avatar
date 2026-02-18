@@ -177,7 +177,7 @@ Character presets define avatar appearances and personalities.
    }
    ```
 
-2. **Reference the schema** in `SCHEMAS.md` to ensure validity
+2. **Reference the schema** in [SCHEMAS.md](./SCHEMAS.md) to ensure validity
 
 3. **Add to CharacterGallery.ts**:
    - Import and register your character

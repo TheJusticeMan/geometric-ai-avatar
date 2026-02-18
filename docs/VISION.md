@@ -812,7 +812,7 @@ But the foundation is solid. We've proven the concept with geometric shapes. Now
 **Last Updated:** 2024  
 **Status:** Vision Document - Guiding Future Development  
 **Related Documents:** 
-- `ARCHITECTURE.md` - System technical architecture
-- `IMPLEMENTATION_PLAN.md` - Phased development roadmap
-- `PERSONALITY_MAPPING.md` - Personality-to-visual mappings
-- `SCHEMAS.md` - JSON schema definitions
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - System technical architecture
+- [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) - Phased development roadmap
+- [PERSONALITY_MAPPING.md](./PERSONALITY_MAPPING.md) - Personality-to-visual mappings
+- [SCHEMAS.md](./SCHEMAS.md) - JSON schema definitions

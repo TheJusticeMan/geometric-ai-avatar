@@ -1857,4 +1857,4 @@ Generated for: geometric-ai-avatar v1.0.0
 
 ---
 
-*For more information, see the [Architecture Documentation](./ARCHITECTURE.md) and [Vision Document](../VISION.md).*
+*For more information, see the [Architecture Documentation](./ARCHITECTURE.md) and [Vision Document](./VISION.md).*
